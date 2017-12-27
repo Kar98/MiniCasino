@@ -12,11 +12,16 @@ namespace MiniCasino.PlayingCards
     {
         List<Card> cards = new List<Card>();
         
-        public Deck()
+        public Deck(int numOfDecks = 1)
         {
-            CreateNewDeck();
+            CreateNewDeck(numOfDecks);
             Shuffle();
             //PrintCards();
+        }
+
+        protected Deck(List<Card> cards)
+        {
+            this.cards = cards;
         }
 
         public List<Card> ReturnDeck()
@@ -24,28 +29,57 @@ namespace MiniCasino.PlayingCards
             return cards;
         }
 
-        private void CreateNewDeck()
+        public void CreateNewDeck(int numOfDecks = 1)
         {
-            //List<Card> newDeck = new List<Card>();
-
-            foreach (var c in Card.card)
+            //Adds new decks to the current object.
+            for (int i = 0; i < numOfDecks; i++)
             {
-                cards.Add(new Card(Card.Suit.CLUB, c));
+                foreach (var c in Card.card)
+                {
+                    cards.Add(new Card(Card.Suit.CLUB, c));
+                }
+                foreach (var c in Card.card)
+                {
+                    cards.Add(new Card(Card.Suit.DIAMOND, c));
+                }
+                foreach (var c in Card.card)
+                {
+                    cards.Add(new Card(Card.Suit.HEART, c));
+                }
+                foreach (var c in Card.card)
+                {
+                    cards.Add(new Card(Card.Suit.SPADE, c));
+                }
             }
-            foreach (var c in Card.card)
-            {
-                cards.Add(new Card(Card.Suit.DIAMOND, c));
-            }
-            foreach (var c in Card.card)
-            {
-                cards.Add(new Card(Card.Suit.HEART, c));
-            }
-            foreach (var c in Card.card)
-            {
-                cards.Add(new Card(Card.Suit.SPADE, c));
-            }
-
         }
+
+        public static Deck ReturnNewDeck(int numOfDecks = 1)
+        {
+            List<Card> newDeck = new List<Card>();
+            for (int i = 0; i < numOfDecks; i++)
+            {
+                foreach (var c in Card.card)
+                {
+                    newDeck.Add(new Card(Card.Suit.CLUB, c));
+                }
+                foreach (var c in Card.card)
+                {
+                    newDeck.Add(new Card(Card.Suit.DIAMOND, c));
+                }
+                foreach (var c in Card.card)
+                {
+                    newDeck.Add(new Card(Card.Suit.HEART, c));
+                }
+                foreach (var c in Card.card)
+                {
+                    newDeck.Add(new Card(Card.Suit.SPADE, c));
+                }
+
+            }
+            return new Deck(newDeck);
+        }
+
+        
 
         public void Shuffle()
         {

@@ -34,6 +34,7 @@
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.IO.Log" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -44,10 +45,19 @@
   <ItemGroup>
     <Compile Include="Blackjack\BlackjackPlayer.cs" />
     <Compile Include="Blackjack\BlackjackGame.cs" />
+    <Compile Include="CardGame.cs" />
+    <Compile Include="Db.cs" />
+    <Compile Include="Logging\Logs.cs" />
+    <Compile Include="Patrons\iPerson.cs" />
+    <Compile Include="Patrons\Patron.cs" />
     <Compile Include="Patrons\Person.cs" />
+    <Compile Include="Patrons\CardPlayer.cs" />
     <Compile Include="Patrons\Staff\BlackjackDealer.cs" />
+    <Compile Include="Patrons\Staff\iCardDealer.cs" />
     <Compile Include="PlayingCards\Card.cs" />
     <Compile Include="PlayingCards\Deck.cs" />
+    <Compile Include="Poker\HoldemGame.cs" />
+    <Compile Include="Poker\PokerPlayer.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Rooms\Room.cs" />

@@ -8,30 +8,28 @@ using MiniCasino.Patrons.Staff;
 
 namespace MiniCasino.Rooms
 {
-    class Tables
+    public class Tables
     {
-        public string Code;
-        public BlackjackDealer dealer;
+        protected int ID;
+        public Person dealer;
         public List<Person> players;
-        private int playerLimit = 8;
+        protected int playerLimit;
 
-        Tables()
+        public Tables(int id, int totalPlayers = 8)
         {
-            dealer = new BlackjackDealer("123",new DateTime(1990,4,3),'F');
+            ID = id;
             players = new List<Person>();
+            playerLimit = totalPlayers;
         }
 
-        public bool AddPlayer(Person p)
+        public int TableID()
         {
-            if (players.Count > playerLimit)
-            {
-                return false;
-            }
-            else
-            {
-                players.Add(p);
-                return true;
-            }
+            return ID;
+        }
+
+        public int PlayerLimit()
+        {
+            return playerLimit;
         }
         
 

@@ -8,12 +8,14 @@ using System.Threading.Tasks;
 
 namespace MiniCasino.Blackjack
 {
-    public class BlackjackPlayer : Person
+    public class BlackjackPlayer : Patron, CardPlayer
     {
-        List<Card> cards;
-        int cardsValue;
-        public BlackjackPlayer(string address, DateTime bday, char sex) : base(address, bday, sex)
+        protected List<Card> cards;
+        protected int cardsValue;
+
+        public BlackjackPlayer(string address, DateTime bday, char sex, double startingMoney = 10.0) : base(address, bday, sex)
         {
+            Money = startingMoney;
             cards = new List<Card>();
         }
 
@@ -22,6 +24,10 @@ namespace MiniCasino.Blackjack
         public void AddCards(Card c)
         {
             cards.Add(c);
+        }
+        public void SetCardList(List<Card> cards)
+        {
+            this.cards = cards;
         }
         public List<Card> ReturnCards()
         {
@@ -41,6 +47,5 @@ namespace MiniCasino.Blackjack
             }
 
         }
-        
     }
 }

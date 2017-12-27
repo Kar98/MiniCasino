@@ -6,29 +6,53 @@ using System.Threading.Tasks;
 
 namespace MiniCasino.Patrons
 {
-    public abstract class Person
+    public abstract class Person : iPerson
     {
-        private string _address;
-        private int _age;
-        private DateTime _birthday;
-        private char _sex;
-        private bool _verified;
+        public AddressDetails Address { get; protected set; }
+        public int Age { get; protected set; }
+        public DateTime Birthday { get; protected set; }
+        public char Sex { get; protected set; }
+        public bool Verified { get; protected set; }
+        public string Lastname { get; protected set; }
+        public string Firstname { get; protected set; }
+        /**public string Lastname { get; protected set; }
+        public string Firstname { get; protected set; }*/
 
-        public string Address { get => _address; set => _address = value; }
-        public int Age { get => _age; set => _age = value; }
-        public DateTime Birthday { get => _birthday; set => _birthday = value; }
-        public char Sex { get => _sex; set => _sex = value; }
-        public bool Verified { get => _verified; set => _verified = value; }
-
-        //private Identification ID;
-
-        public Person(string address, DateTime bday, char sex)
+        public Person(DateTime bday, char sex)
         {
-            this.Address = address;
+            this.Address = new AddressDetails();
             CalculateAge(bday);
             this.Birthday = bday;
             this.Sex = sex;
             this.Verified = false;
+        }
+
+        public Person(string address, DateTime bday, char sex)
+        {
+            this.Address = new AddressDetails(address);
+            CalculateAge(bday);
+            this.Birthday = bday;
+            this.Sex = sex;
+            this.Verified = false;
+        }
+        
+        public string GetLastname()
+        {
+            return Lastname;
+        }
+
+        public void SetLastname(string s)
+        {
+            Lastname = s;
+        }
+
+        public string GetFirstname()
+        {
+            return Firstname;
+        }
+        public void SetFirstname(string s)
+        {
+            Firstname = s;
         }
 
         public bool VerifyPerson(string args)
@@ -44,7 +68,48 @@ namespace MiniCasino.Patrons
             var diff = currentDate.Subtract(dt);
         }
 
+        public AddressDetails GetAddress()
+        {
+            return Address;
+        }
 
+        public string GetAddressAsString()
+        {
+            return Address.QualifiedAddress;
+        }
+
+        public int GetAge()
+        {
+            return Age;
+        }
+
+        public DateTime GetBirthday()
+        {
+            return Birthday;
+        }
+
+        public char GetSex()
+        {
+            return Sex;
+        }
+
+        public class AddressDetails
+        {
+            public int Unitnumber { get; set; }
+            public string Housenumber { get; set; }
+            public string Streetname { get; set; }
+            public string Streettype { get; set; }
+            public string City { get; set; }
+            public string Postcode { get; set; }
+            public string QualifiedAddress { get; set; }
+
+            public AddressDetails() { }
+
+            public AddressDetails(string fullAddress) {
+                QualifiedAddress = fullAddress;
+            }
+
+        }
 
 
     }

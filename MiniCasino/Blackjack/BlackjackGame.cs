@@ -6,17 +6,18 @@ using MiniCasino.Rooms;
 using System.Collections;
 using System.Collections.Generic;
 using MiniCasino.Patrons.Staff;
+using System.Collections.Concurrent;
+using MiniCasino.Logging;
 
 namespace MiniCasino.Blackjack
 {
-    public class BlackjackGame
+    public class BlackjackGame : CardGame
     {
-        Stack st;
-        private Room room;
-        private BlackjackDealer dealer;
-        private List<BlackjackPlayer> playerGroup;
-        private bool run;
         private int hands = 0;
+        private Dictionary<BlackjackPlayer, double> betPool = new Dictionary<BlackjackPlayer, double>();
+        public string logID;
+        public int ID;
+        BlackjackDealer dealer;
 
         BlackjackPlayer player1 = DefaultPatron();
         BlackjackPlayer player2 = DefaultPatron();
@@ -25,37 +26,52 @@ namespace MiniCasino.Blackjack
 
         public int Hands { get => hands; set => hands = value; }
 
-        public BlackjackGame(Room AssignedRoom, BlackjackDealer dealer)
+        public BlackjackGame(Tables AssignedTable, iCardDealer dealer, double minbet = 2.0)
         {
-            Console.WriteLine("New blackjack game started");
-            this.room = AssignedRoom;
-            this.dealer = dealer;
+            this.table = AssignedTable;
+            this.dealer = new BlackjackDealer(dealer.GetAddress().QualifiedAddress,dealer.GetBirthday(),dealer.GetSex());
+            logID = Guid.NewGuid().ToString();
+            Console.WriteLine(logID);
+            ID = table.TableID();
+            pendingPlayers = new BlockingCollection<CardPlayer>();
+
+            Logs.RegisterNewTrace(logID, null, "bj");
+
+            Logs.LogTrace("log GUID : " + logID, logID);
+            Logs.LogTrace($"T: {Thread.CurrentThread.ManagedThreadId} New blackjack game started", logID);
+
             st = new Stack(new Deck().ReturnDeck());
-            playerGroup = new List<BlackjackPlayer>
+            minBet = minbet;
+            playerGroup = new List<CardPlayer>
             {
                 player1,
                 player2,
                 player3,
                 player4
             };
-            Main();
-            Console.WriteLine("Game has ended");
         }
 
-        private void Main()
+        public override void StartGame()
         {
             run = true;
             Hands = 0;
+            table.players = this.CastToPerson(playerGroup);
+
+            Console.WriteLine($"Game started - {ID}");
+
             while (run)
             {
+                Logs.LogTrace("count of players: " + playerGroup.Count, logID);
                 Hands++;
-                if (hands == 5)
-                    playerGroup.Add(DefaultPatron());
 
-                if (hands == 8)
-                    playerGroup.Remove(player1);
+                Logs.LogTrace($"*Start {hands}*", logID);
+                while(pendingPlayers.Count > 0)
+                {
+                    playerGroup.Add(pendingPlayers.Take());
+                }
 
-                Console.WriteLine($"*Start {hands}*");
+                CheckForValidPlayers();
+                Bets();
                 Deal();
 
                 foreach (BlackjackPlayer bp in playerGroup)
@@ -65,39 +81,75 @@ namespace MiniCasino.Blackjack
 
                 DealerAI();
 
-                Console.WriteLine("Dealer : " + dealer.CardsValue);
+                Logs.LogTrace("Dealer : " + dealer.CardsValue, logID);
 
                 foreach (BlackjackPlayer bp in playerGroup)
                 {
-                    Console.WriteLine("Player: " + bp.CardsValue);
+                    Logs.LogTrace("Player: " + bp.CardsValue, logID);
                     if (DecideOutcome(bp))
-                        Console.WriteLine("Winner");
+                    {
+                        Logs.LogTrace("Winner");
+                        var bet = betPool[bp];
+                        bp.Money += bet*2;
+                    }
                     else
-                        Console.WriteLine("Loser");
+                        Logs.LogTrace("Loser", logID);
                 }
                 ShuffleCardsBackIn();
-                if(Hands > 10)
+                PrintPlayersMoney();
+                End();
+
+                if(Hands > 30)
                     run = false;
-                Console.WriteLine($"*End {hands}*");
-                Thread.Sleep(1000);
+                if (playerGroup.Count < 1)
+                    run = false;
+
+                Logs.LogTrace($"*End {hands}*", logID);
+                Thread.Sleep(500);
             }
-            
+            Console.WriteLine($"Game has ended {logID}");
         }
 
-        private void Hit(BlackjackPlayer bp)
+        private void Hit(CardPlayer bp)
         {
             bp.AddCards((Card)st.Pop());
         }
-        private void Hit(BlackjackDealer bp)
+        private void Hit(iCardDealer bp)
         {
-            bp.AddCards((Card)st.Pop());
+           bp.AddCards((Card)st.Pop());
         }
         private void Hit(List<Card> cards)
         {
             cards.Add((Card)st.Pop());
         }
 
-        private void Deal()
+        private void Bets()
+        {
+            double betValue;
+            foreach(BlackjackPlayer bp in playerGroup)
+            {
+                betValue = minBet;
+                betPool.Add(bp, betValue);
+                bp.Money -= minBet;
+            }
+        }
+
+        private void CheckForValidPlayers()
+        {
+            var tempGroup = new List<CardPlayer>();
+
+            foreach (var player in playerGroup)
+            {
+                Console.Write(((Person)player).Firstname);
+                if (player.GetMoney() >= minBet)
+                    tempGroup.Add(player);
+                else
+                    Logs.LogTrace($"{player.GetLastname()} {player.GetFirstname()} has been removed from {logID}", logID);
+            }
+            playerGroup = tempGroup;
+        }
+
+        protected override void Deal()
         {
             foreach (BlackjackPlayer player in playerGroup)
             {
@@ -108,12 +160,23 @@ namespace MiniCasino.Blackjack
             dealer.AddCards((Card)st.Pop());
         }
 
+        protected override void End()
+        {
+            betPool.Clear();
+            Console.WriteLine("Hand finished");
+        }
+
+        public override void AddDefaultPlayer()
+        {
+            pendingPlayers.Add(DefaultPatron());
+        }
+
         private void PlayerAI(BlackjackPlayer bp)
         {
             int cardValue = 0;
             if (CanSplit(bp))
             {
-                Console.WriteLine("Found split");
+                Logs.LogTrace("Found split", logID);
                 List<Card> deck1 = new List<Card> { bp.ReturnCards()[0] };
                 List<Card> deck2 = new List<Card> { bp.ReturnCards()[1] };
 
@@ -128,8 +191,10 @@ namespace MiniCasino.Blackjack
                 {
                     bp.CardsValue = deck2Val;
                 }
-                
-
+                List<Card> returnCardList = new List<Card>();
+                returnCardList.AddRange(deck1);
+                returnCardList.AddRange(deck2);
+                bp.SetCardList(returnCardList);
             }
             else {
                 cardValue = CalcCards(bp.ReturnCards());
@@ -140,6 +205,7 @@ namespace MiniCasino.Blackjack
                 }
                 bp.CardsValue = cardValue;
             }
+            
         }
 
         private int BasicPlayerAI(List<Card> cards)
@@ -163,6 +229,7 @@ namespace MiniCasino.Blackjack
                 
             return cardValue;
         }
+
         private void DealerAI()
         {
             int cardValue = 0;
@@ -177,14 +244,17 @@ namespace MiniCasino.Blackjack
 
         private void ShuffleCardsBackIn()
         {
+            int cardCount = 0;
             List<Card> dealtCards = new List<Card>();
             foreach(BlackjackPlayer bp in playerGroup)
             {
+                cardCount += bp.ReturnCards().Count;
                 var playerCards = bp.ReturnCards();
                 dealtCards.AddRange(playerCards);
                 bp.DestroyCards();
             }
             dealtCards.AddRange(dealer.ReturnCards());
+            cardCount += dealer.ReturnCards().Count;
             dealer.DestroyCards();
             foreach(Card c in dealtCards)
             {
@@ -192,11 +262,18 @@ namespace MiniCasino.Blackjack
             }
         }
 
+        private void PrintPlayersMoney()
+        {
+            foreach(var player in playerGroup)
+            {
+                Logs.LogTrace($"${player.GetMoney()}");
+            }
+            
+        }
+
         private int CalcCards(List<Card> cards, bool aceIsOne = false)
         {
             int cardValues = 0;
-            if (FindAce(cards))
-                cardValues = cardValues;
             foreach (Card c in cards)
             {
                 if (c.Picture())
@@ -232,7 +309,6 @@ namespace MiniCasino.Blackjack
                 return false;
             if (dealer.CardsValue > 21)
                 return true;
-            
 
             if (bp.CardsValue > dealer.CardsValue)
                 return true;
