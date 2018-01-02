@@ -22,8 +22,8 @@ namespace MiniCasino
         protected List<CardPlayer> playerGroup;
         protected BlockingCollection<CardPlayer> pendingPlayers;
         protected Stack st;
-        protected Dictionary<CardPlayer, double> betPool = new Dictionary<CardPlayer, double>();
         protected bool run;
+        public int Hands { get; set; }
 
         protected virtual void Deal()
         {
@@ -50,6 +50,32 @@ namespace MiniCasino
                 returnList.Add((Person)l);
             }
             return returnList;
+        }
+
+        protected List<Card> GetAllPlayerCards()
+        {
+            List<Card> dealtCards = new List<Card>();
+            foreach(var p in playerGroup)
+            {
+                dealtCards.AddRange(p.ReturnCards());
+            }
+            return dealtCards;
+        }
+
+        protected void DestroyPlayerCards()
+        {
+            foreach(var p in playerGroup)
+            {
+                p.DestroyCards();
+            }
+        }
+
+        protected void ShuffleCardsBackIn(List<PlayingCards.Card> cards)
+        {
+            foreach (Card c in cards)
+            {
+                st.Push(c);
+            }
         }
 
         protected virtual void End()

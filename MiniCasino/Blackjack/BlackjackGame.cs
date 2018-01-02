@@ -17,14 +17,12 @@ namespace MiniCasino.Blackjack
         private Dictionary<BlackjackPlayer, double> betPool = new Dictionary<BlackjackPlayer, double>();
         public string logID;
         public int ID;
-        BlackjackDealer dealer;
+        new BlackjackDealer dealer;
 
         BlackjackPlayer player1 = DefaultPatron();
         BlackjackPlayer player2 = DefaultPatron();
         BlackjackPlayer player3 = DefaultPatron();
         BlackjackPlayer player4 = DefaultPatron();
-
-        public int Hands { get => hands; set => hands = value; }
 
         public BlackjackGame(Tables AssignedTable, iCardDealer dealer, double minbet = 2.0)
         {
@@ -242,24 +240,15 @@ namespace MiniCasino.Blackjack
             dealer.CardsValue = cardValue;
         }
 
+        
         private void ShuffleCardsBackIn()
         {
-            int cardCount = 0;
             List<Card> dealtCards = new List<Card>();
-            foreach(BlackjackPlayer bp in playerGroup)
-            {
-                cardCount += bp.ReturnCards().Count;
-                var playerCards = bp.ReturnCards();
-                dealtCards.AddRange(playerCards);
-                bp.DestroyCards();
-            }
+            dealtCards.AddRange(GetAllPlayerCards());
+            DestroyPlayerCards();
             dealtCards.AddRange(dealer.ReturnCards());
-            cardCount += dealer.ReturnCards().Count;
             dealer.DestroyCards();
-            foreach(Card c in dealtCards)
-            {
-                st.Push(c);
-            }
+            ShuffleCardsBackIn(dealtCards);
         }
 
         private void PrintPlayersMoney()

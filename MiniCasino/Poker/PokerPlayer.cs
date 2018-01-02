@@ -8,23 +8,31 @@ using MiniCasino.PlayingCards;
 
 namespace MiniCasino.Poker
 {
+    public enum PlayerAction { NONE, CALL, RAISE, FOLD };
+
     public class PokerPlayer : Patron, CardPlayer
     {
         protected List<Card> cards;
         protected int cardsValue;
-        protected uint chips;
+        public long Chips { get; set; }
+        public bool Active { get;set;}
+        public bool BetsPlaced { get; set; }
+        public long BetValue { get; protected set; }
+
+        
 
         public PokerPlayer(string address, DateTime bday, char sex, double startingMoney = 10.0) : base(address, bday, sex)
         {
             Money = startingMoney;
             cards = new List<Card>();
-            chips = 10000;
+            Chips = 10000;
         }
 
         public PokerPlayer(CardPlayer player, double startingMoney = 10.0) : base(player.GetAddress().QualifiedAddress, player.GetBirthday(), player.GetSex())
         {
             Money = startingMoney;
             cards = new List<Card>();
+            Chips = 10000;
         }
 
         private static PokerPlayer DefaultPatron()
@@ -35,6 +43,37 @@ namespace MiniCasino.Poker
         public void AddCards(Card c)
         {
             cards.Add(c);
+        }
+
+        public void SetBlinds(long l)
+        {
+            BetValue = l;
+        }
+
+        public PlayerAction Raise(long value)
+        {
+            BetsPlaced = true;
+            BetValue += value;
+            return PlayerAction.RAISE;
+        }
+
+        public PlayerAction Call(long value)
+        {
+            BetsPlaced = true;
+            BetValue = value;
+            return PlayerAction.CALL;
+        }
+
+        public PlayerAction Fold()
+        {
+            Active = false;
+            return PlayerAction.FOLD;
+        }
+
+        public void ResetContext()
+        {
+            BetValue = 0;
+            BetsPlaced = false;
         }
 
         public bool DestroyCards()

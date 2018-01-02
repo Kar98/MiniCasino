@@ -27,9 +27,9 @@ namespace MiniCasino
             r = new Random();
             var tasks = new List<Task>();
 
-            for (int i = 0; i < 2; i++)
+            for (int i = 0; i < 1; i++)
             {
-                NewBlackjackGame();
+                NewHoldenGame();
             }
 
             games.ForEach(a => {
