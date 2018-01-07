@@ -9,7 +9,7 @@ namespace MiniCasino.PlayingCards
     public class Card
     {
         public enum Suit { HEART, CLUB, SPADE, DIAMOND };
-        public static char[] card = { '2', '3', '4', '5', '6', '7', '8', '9', '0', 'J', 'Q', 'K', 'A' };
+        public char[] order = { '2', '3', '4', '5', '6', '7', '8', '9', '0', 'J', 'Q', 'K', 'A' };
 
         Suit suit;
         char number;
@@ -37,6 +37,16 @@ namespace MiniCasino.PlayingCards
         public Suit ReturnSuit()
         {
             return this.suit;
+        }
+
+        public int FindOrder(char c)
+        {
+            for(int i = 0;i < order.Length; i++)
+            {
+                if (c == order[i])
+                    return i + 1;
+            }
+            return -1;
         }
     }
 }

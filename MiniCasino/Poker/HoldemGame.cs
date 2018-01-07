@@ -58,7 +58,7 @@ namespace MiniCasino.Poker
              * 
              * Card evaluation
              * Pot logic - sides pots
-             * 
+             * Enable actual play from console
              * 
              */
             IncrementBlindCheck();
@@ -128,6 +128,22 @@ namespace MiniCasino.Poker
         {
             ResetPlayerContext();
             tableCards.Add((Card)st.Pop());
+        }
+
+        private void Showdown()
+        {
+            /*
+             * 4 people
+             * All need to evaluate what they have
+             
+             * * Pass the cards off to somewhere
+             * 1 - 
+             * 2
+             * 3
+             * 4
+             * 
+             
+             */
         }
 
         private void Blinds()

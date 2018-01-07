@@ -57,6 +57,7 @@
     <Compile Include="PlayingCards\Card.cs" />
     <Compile Include="PlayingCards\Deck.cs" />
     <Compile Include="Poker\HoldemGame.cs" />
+    <Compile Include="Poker\PokerEvaluator.cs" />
     <Compile Include="Poker\PokerPlayer.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
