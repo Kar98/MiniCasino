@@ -15,6 +15,7 @@ namespace MiniCasino.Poker
     {
         private Dictionary<PokerPlayer, long> betPool = new Dictionary<PokerPlayer, long>();
         private Dictionary<int, PokerPlayer> positions = new Dictionary<int, PokerPlayer>();
+        private List<PokerPlayer> availablePlayers = new List<PokerPlayer>();
 
         Random r;
         long bb; //big blind
@@ -55,7 +56,7 @@ namespace MiniCasino.Poker
         private void Main()
         {
             /* TODO: POKER GAME
-             * 
+             * Need a way to insert items to the back of the stack or reshuffle the whole deck again.
              * Card evaluation
              * Pot logic - sides pots
              * Enable actual play from console
@@ -74,7 +75,8 @@ namespace MiniCasino.Poker
             BettingRound(BetStage.TURN);
             River();
             BettingRound(BetStage.RIVER);
-            //Showdown();
+            Showdown();
+
             
             End();
         }
@@ -92,6 +94,7 @@ namespace MiniCasino.Poker
             }
 
             Console.WriteLine($"game ended: {logID}");
+
         }
 
         protected override void Deal()
@@ -144,6 +147,14 @@ namespace MiniCasino.Poker
              * 
              
              */
+
+            PokerEvaluator pe = new PokerEvaluator(availablePlayers, tableCards);
+
+            
+            // if no winner, then run side pot, else give all to winner.
+
+
+
         }
 
         private void Blinds()
@@ -239,11 +250,16 @@ namespace MiniCasino.Poker
             players = ReformPlayerList(players, startingPoint);
             bool betsDone = false;
 
-            if(bs != BetStage.INITIAL)
+            /*foreach (var p in players)
+            {
+                p.SetAvailableCards(tableCards);
+            }*/
+
+            if (bs != BetStage.INITIAL)
             {
                 raiseSize = 0;
+                
             }
-
 
             while (betsDone == false)
             {
@@ -263,6 +279,8 @@ namespace MiniCasino.Poker
                 players = ReformPlayerList(players, raisePoint);
                 betsDone = BettingChecks(players);
             }
+
+            availablePlayers = players;
 
         }
 
@@ -403,8 +421,10 @@ namespace MiniCasino.Poker
         protected override void End()
         {
             Console.WriteLine($"Pot size: {pot}");
+            
             ShuffleCardsBackIn(GetAllPlayerCards());
             ShuffleCardsBackIn(tableCards);
+            Console.WriteLine(st.Count);
             ResetPlayerContext();
             SetBetPoolToZero();
             tableCards = null;
@@ -412,7 +432,9 @@ namespace MiniCasino.Poker
             playerGroup.ForEach(a => a.DestroyCards());
             pot = 0;
             raiseSize = 0;
+            availablePlayers = null;
             IncrementIndex(button, 1);
+            
         }
 
 

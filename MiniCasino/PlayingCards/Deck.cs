@@ -34,21 +34,21 @@ namespace MiniCasino.PlayingCards
             //Adds new decks to the current object.
             for (int i = 0; i < numOfDecks; i++)
             {
-                foreach (var c in Card.card)
+                foreach (var c in Card.order)
                 {
-                    cards.Add(new Card(Card.Suit.CLUB, c));
+                    cards.Add(new Card(Card.Suits.CLUB, c));
                 }
-                foreach (var c in Card.card)
+                foreach (var c in Card.order)
                 {
-                    cards.Add(new Card(Card.Suit.DIAMOND, c));
+                    cards.Add(new Card(Card.Suits.DIAMOND, c));
                 }
-                foreach (var c in Card.card)
+                foreach (var c in Card.order)
                 {
-                    cards.Add(new Card(Card.Suit.HEART, c));
+                    cards.Add(new Card(Card.Suits.HEART, c));
                 }
-                foreach (var c in Card.card)
+                foreach (var c in Card.order)
                 {
-                    cards.Add(new Card(Card.Suit.SPADE, c));
+                    cards.Add(new Card(Card.Suits.SPADE, c));
                 }
             }
         }
@@ -58,28 +58,23 @@ namespace MiniCasino.PlayingCards
             List<Card> newDeck = new List<Card>();
             for (int i = 0; i < numOfDecks; i++)
             {
-                foreach (var c in Card.card)
+                foreach (var c in Card.order)
                 {
-                    newDeck.Add(new Card(Card.Suit.CLUB, c));
+                    newDeck.Add(new Card(Card.Suits.CLUB, c));
                 }
-                foreach (var c in Card.card)
+                foreach (var c in Card.order)
                 {
-                    newDeck.Add(new Card(Card.Suit.DIAMOND, c));
+                    newDeck.Add(new Card(Card.Suits.DIAMOND, c));
                 }
-                foreach (var c in Card.card)
+                foreach (var c in Card.order)
+                    newDeck.Add(new Card(Card.Suits.HEART, c));
+                }
+                foreach (var c in Card.order)
                 {
-                    newDeck.Add(new Card(Card.Suit.HEART, c));
+                    newDeck.Add(new Card(Card.Suits.SPADE, c));
                 }
-                foreach (var c in Card.card)
-                {
-                    newDeck.Add(new Card(Card.Suit.SPADE, c));
-                }
-
-            }
             return new Deck(newDeck);
         }
-
-        
 
         public void Shuffle()
         {
@@ -108,7 +103,7 @@ namespace MiniCasino.PlayingCards
             {
                 foreach (Card c in cards)
                 {
-                    file.WriteLine(c.ReturnSuit().ToString() + " " + c.Number());
+                    file.WriteLine(c.Suit.ToString() + " " + c.Number);
                 }
             }
         }

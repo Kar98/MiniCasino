@@ -8,35 +8,21 @@ namespace MiniCasino.PlayingCards
 {
     public class Card
     {
-        public enum Suit { HEART, CLUB, SPADE, DIAMOND };
-        public char[] order = { '2', '3', '4', '5', '6', '7', '8', '9', '0', 'J', 'Q', 'K', 'A' };
+        public enum Suits { HEART, CLUB, SPADE, DIAMOND };
+        public static char[] order = { '2', '3', '4', '5', '6', '7', '8', '9', '0', 'J', 'Q', 'K', 'A' };
 
-        Suit suit;
-        char number;
-        bool picture;
+        public Suits Suit { get; set; }
+        public char Number { get; set; }
+        public bool Picture { get; set; }
 
-        public Card(Suit s, char n)
+        public Card(Suits s, char n)
         {
-            suit = s;
-            number = n;
+            Suit = s;
+            Number = n;
             if (n == 'J' | n == 'Q' | n == 'K')
-                picture = true;
+                Picture = true;
             else
-                picture = false;
-        }
-
-        public bool Picture()
-        {
-            return this.picture;
-        }
-
-        public char Number()
-        {
-            return this.number;
-        }
-        public Suit ReturnSuit()
-        {
-            return this.suit;
+                Picture = false;
         }
 
         public int FindOrder(char c)
@@ -48,5 +34,6 @@ namespace MiniCasino.PlayingCards
             }
             return -1;
         }
+
     }
 }

@@ -12,7 +12,8 @@ namespace MiniCasino.Poker
 
     public class PokerPlayer : Patron, CardPlayer
     {
-        protected List<Card> cards;
+        protected List<Card> pocketCards;
+        //public List<Card> TotalCards { get; protected set; }
         protected int cardsValue;
         public long Chips { get; set; }
         public bool Active { get;set;}
@@ -24,14 +25,15 @@ namespace MiniCasino.Poker
         public PokerPlayer(string address, DateTime bday, char sex, double startingMoney = 10.0) : base(address, bday, sex)
         {
             Money = startingMoney;
-            cards = new List<Card>();
+            pocketCards = new List<Card>();
+            //TotalCards = new List<Card>();
             Chips = 10000;
         }
 
         public PokerPlayer(CardPlayer player, double startingMoney = 10.0) : base(player.GetAddress().QualifiedAddress, player.GetBirthday(), player.GetSex())
         {
             Money = startingMoney;
-            cards = new List<Card>();
+            pocketCards = new List<Card>();
             Chips = 10000;
         }
 
@@ -42,8 +44,20 @@ namespace MiniCasino.Poker
 
         public void AddCards(Card c)
         {
-            cards.Add(c);
+            pocketCards.Add(c);
         }
+
+        /*
+        public void SetAvailableCards(List<Card> cards)
+        {
+            List<Card> tmp = new List<Card>();
+            tmp.AddRange(pocketCards);
+            if(cards != null)
+                tmp.AddRange(cards);
+            TotalCards = tmp;
+        }
+        */
+
 
         public void SetBlinds(long l)
         {
@@ -80,7 +94,7 @@ namespace MiniCasino.Poker
         {
             try
             {
-                cards.RemoveRange(0, cards.Count);
+                pocketCards.RemoveRange(0, pocketCards.Count);
                 return true;
             }
             catch (Exception e)
@@ -93,12 +107,12 @@ namespace MiniCasino.Poker
 
         public List<Card> ReturnCards()
         {
-            return cards;
+            return pocketCards;
         }
 
         public void SetCardList(List<Card> cards)
         {
-            this.cards = cards;
+            this.pocketCards = cards;
         }
     }
 }

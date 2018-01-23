@@ -70,12 +70,18 @@ namespace MiniCasino
             }
         }
 
-        protected void ShuffleCardsBackIn(List<PlayingCards.Card> cards)
+        protected void ShuffleCardsBackIn(List<Card> cards)
         {
+            //ArrayList arr = new ArrayList();
+            ArrayList nc = new ArrayList();
+            nc.CopyTo(nc, 0);
+            nc.AddRange(cards);
+            st = new Stack(nc);
+            /*
             foreach (Card c in cards)
             {
                 st.Push(c);
-            }
+            }*/
         }
 
         protected virtual void End()

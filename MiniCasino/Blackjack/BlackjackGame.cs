@@ -265,19 +265,19 @@ namespace MiniCasino.Blackjack
             int cardValues = 0;
             foreach (Card c in cards)
             {
-                if (c.Picture())
+                if (c.Picture)
                 {
                     cardValues += 10;
                 }
                 else
                 {
-                    if(c.Number() == '0')
+                    if(c.Number == '0')
                     {
                         cardValues += 10;
                     }
-                    else if(c.Number() != 'A')
+                    else if(c.Number != 'A')
                     {
-                        cardValues += int.Parse(c.Number().ToString());
+                        cardValues += int.Parse(c.Number.ToString());
                     }
                     else if(aceIsOne == false)
                     {
@@ -308,7 +308,7 @@ namespace MiniCasino.Blackjack
         private bool CanSplit(BlackjackPlayer bp)
         {
             var cardArr = bp.ReturnCards().ToArray();
-            if (cardArr[0].Number() == cardArr[1].Number())
+            if (cardArr[0].Number == cardArr[1].Number)
                 return true;
             else
                 return false;
@@ -323,7 +323,7 @@ namespace MiniCasino.Blackjack
         {
             foreach (Card c in cards)
             {
-                if (char.Equals(c.Number(),'A'))
+                if (char.Equals(c.Number,'A'))
                     return true;
             }
             return false;

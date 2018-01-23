@@ -16,6 +16,21 @@ namespace MiniCasino.Poker
     {
         public Dictionary<PokerPlayer,int> rankings;
         private List<PokerPlayer> players;
+        private List<Card> tableCards;
+
+        /*
+         * TODO: poker evaluation
+         * Get high card value
+         * Logic for straight
+         * Logic for flush
+         * Logic for pairs and triples
+         * 
+         
+             */
+
+            public enum Testing {  ONE, TWO, THREE };
+
+        
 
         public enum PokerHands {
             UNRANKED = 0,
@@ -45,18 +60,46 @@ namespace MiniCasino.Poker
 
 
 
-        public PokerEvaluator(List<PokerPlayer> _players)
+        public PokerEvaluator(List<PokerPlayer> _players, List<Card> _tableCards)
         {
+            rankings = new Dictionary<PokerPlayer, int>();
+            tableCards = _tableCards;
             players = _players;
             foreach(var p in _players)
             {
                 rankings.Add(p, 0);
             }
+            Run();
         }
+
+        public PokerEvaluator(PokerPlayer _player, List<Card> _tableCards)
+        {
+            rankings = new Dictionary<PokerPlayer, int>();
+            tableCards = _tableCards;
+
+            players.Add(_player);
+            rankings.Add(_player, 0);
+            
+            Run();
+        }
+
 
         public PokerPlayer Winner()
         {
             return null;
+        }
+
+        public void Run()
+        {
+            foreach(var p in players)
+            {
+                rankings[p] = (int)Evaluate(p.ReturnCards(), tableCards);
+            }
+        }
+
+        public void SetPlayerList(List<PokerPlayer> _players)
+        {
+            players = _players;
         }
 
         private PokerHands Evaluate(List<Card> playerCards,List<Card> tableCards)
@@ -69,26 +112,21 @@ namespace MiniCasino.Poker
              * Straight
              * High card.
              * Eval pairs
-             
              */
-            
-            foreach(var p in players)
-            {
-                var catCards = p.ReturnCards();
-                catCards.AddRange(tableCards);
-                
-                //Royal flush
-                foreach(var c in catCards)
-                {
-                    var suit = c.ReturnSuit();
+            var catCards = new List<Card>();
+            catCards.AddRange(playerCards);
+            catCards.AddRange(tableCards);
 
-                    if(c.ReturnSuit() == suit && c.Number() == '0')
-                    {
+            flush = IsFlush(catCards);
 
-                    }
-                }
+            straight = IsStraight(catCards);
 
-            }
+            if (straight == true)
+                Console.WriteLine("STRAIGHT");
+
+            if (flush == true)
+                Console.WriteLine("FLUSH");
+
 
 
             return PokerHands.UNRANKED;
@@ -96,29 +134,138 @@ namespace MiniCasino.Poker
 
         private bool IsFlush(List<Card> cards)
         {
-            var suit = cards[0].ReturnSuit();
+            int heart = 0, diamond = 0, club = 0, spade = 0;
+
             foreach (var c in cards)
             {
-                if(c.ReturnSuit() != suit)
+                switch (c.Suit)
                 {
-                    return false;
+                    case Card.Suits.CLUB:
+                        club++;
+                        break;
+                    case Card.Suits.SPADE:
+                        spade++;
+                        break;
+                    case Card.Suits.DIAMOND:
+                        diamond++;
+                        break;
+                    case Card.Suits.HEART:
+                        heart++;
+                        break;
+                    default:
+                        return false;
                 }
+
             }
-            return true;
+
+            if (heart == 5 || diamond == 5 || club == 5 || spade == 5)
+                return true;
+
+            return false;
+
         }
 
         private bool IsStraight(List<Card> cards)
         {
+            int straightCount = 1; // number of cards found that are in sequence. 
+            int failures = 0; // current failures.
+            int maxFailures = 10 - cards.Count; // 7 cards = 3, 6 = 2, 5 = 1. Any lower and it's impossible to have a straight.
 
+            //Convert the Card objecet to a easily sortable int. The higher then int the higher the card value.
+            List<int> cardsInt = new List<int>();
+            foreach(var c in cards)
+            {
+                cardsInt.Add(c.FindOrder(c.Number));
+            }
+
+            cardsInt.Distinct(); //clear dupes. Only needed for straight.
+            //Sort in ascending.
+            CardComparerAsc cca = new CardComparerAsc();
+            cardsInt.Sort(cca);
+            PrintStuff(cardsInt);
+
+            for (int i = 0; i < cardsInt.Count; i++)
+            {
+                if (straightCount == 5)
+                    return true;
+
+                if (failures == maxFailures)
+                    return false;
+
+                try
+                {
+                    if (cardsInt[i] + 1 != cardsInt[i + 1])
+                    {
+                        failures++;
+                        straightCount = 1;
+                    }
+                    else
+                        straightCount++;
+                }
+                catch (IndexOutOfRangeException ex)
+                {
+                    Console.WriteLine(ex);
+                    return false;
+                }
+            }
+
+
+            return false;
         }
 
         private bool HighCard(List<Card> cards)
         {
-
+            return false;
         }
 
-
+        private void PrintStuff(List<Card> cards)
+        {
+            foreach(var c in cards)
+            {
+                Console.Write(c.Number + ",");
+            }
+            Console.WriteLine("");
+        }
+        private void PrintStuff(List<int> cards)
+        {
+            foreach (var c in cards)
+            {
+                Console.Write(c+",");
+            }
+            Console.WriteLine("");
+        }
 
     }
-        
+
+    public class CardComparerAsc : IComparer<int>
+    {
+        public int Compare(int x, int y)
+        {
+            if(x > y)
+            {
+                return 1;
+            }
+            else
+            {
+                return -1;
+            }
+        }
+    }
+
+    public class CardComparerDesc : IComparer<int>
+    {
+        public int Compare(int x, int y)
+        {
+            if (x < y)
+            {
+                return 1;
+            }
+            else
+            {
+                return -1;
+            }
+        }
+    }
+
+
 }

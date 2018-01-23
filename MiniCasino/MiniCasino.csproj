@@ -55,6 +55,7 @@
     <Compile Include="Patrons\Staff\BlackjackDealer.cs" />
     <Compile Include="Patrons\Staff\iCardDealer.cs" />
     <Compile Include="PlayingCards\Card.cs" />
+    <Compile Include="PlayingCards\DEStack.cs" />
     <Compile Include="PlayingCards\Deck.cs" />
     <Compile Include="Poker\HoldemGame.cs" />
     <Compile Include="Poker\PokerEvaluator.cs" />
