@@ -202,9 +202,14 @@ namespace MiniCasino.Poker
                     else
                         straightCount++;
                 }
-                catch (IndexOutOfRangeException ex)
+                catch (IndexOutOfRangeException)
                 {
-                    Console.WriteLine(ex);
+                    Console.WriteLine("Straight exception caught");
+                    return false;
+                }
+                catch (ArgumentOutOfRangeException)
+                {
+                    Console.WriteLine("Straight exception caught");
                     return false;
                 }
             }

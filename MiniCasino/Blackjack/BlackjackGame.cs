@@ -38,7 +38,7 @@ namespace MiniCasino.Blackjack
             Logs.LogTrace("log GUID : " + logID, logID);
             Logs.LogTrace($"T: {Thread.CurrentThread.ManagedThreadId} New blackjack game started", logID);
 
-            st = new Stack(new Deck().ReturnDeck());
+            st = new Queue(new Deck().ReturnDeck());
             minBet = minbet;
             playerGroup = new List<CardPlayer>
             {
@@ -110,15 +110,15 @@ namespace MiniCasino.Blackjack
 
         private void Hit(CardPlayer bp)
         {
-            bp.AddCards((Card)st.Pop());
+            bp.AddCards((Card)st.Dequeue());
         }
         private void Hit(iCardDealer bp)
         {
-           bp.AddCards((Card)st.Pop());
+           bp.AddCards((Card)st.Dequeue());
         }
         private void Hit(List<Card> cards)
         {
-            cards.Add((Card)st.Pop());
+            cards.Add((Card)st.Dequeue());
         }
 
         private void Bets()
@@ -151,11 +151,11 @@ namespace MiniCasino.Blackjack
         {
             foreach (BlackjackPlayer player in playerGroup)
             {
-                player.AddCards((Card)st.Pop());
-                player.AddCards((Card)st.Pop());
+                player.AddCards((Card)st.Dequeue());
+                player.AddCards((Card)st.Dequeue());
             }
-            dealer.AddCards((Card)st.Pop());
-            dealer.AddCards((Card)st.Pop());
+            dealer.AddCards((Card)st.Dequeue());
+            dealer.AddCards((Card)st.Dequeue());
         }
 
         protected override void End()

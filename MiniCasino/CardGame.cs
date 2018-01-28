@@ -21,7 +21,7 @@ namespace MiniCasino
         protected iCardDealer dealer;
         protected List<CardPlayer> playerGroup;
         protected BlockingCollection<CardPlayer> pendingPlayers;
-        protected Stack st;
+        protected Queue st;
         protected bool run;
         public int Hands { get; set; }
 
@@ -29,9 +29,9 @@ namespace MiniCasino
         {
             foreach (CardPlayer player in playerGroup)
             {
-                player.AddCards((Card)st.Pop());
+                player.AddCards((Card)st.Dequeue());
             }
-            dealer.AddCards((Card)st.Pop());
+            dealer.AddCards((Card)st.Dequeue());
         }
 
         public virtual void StartGame()
@@ -72,16 +72,10 @@ namespace MiniCasino
 
         protected void ShuffleCardsBackIn(List<Card> cards)
         {
-            //ArrayList arr = new ArrayList();
-            ArrayList nc = new ArrayList();
-            nc.CopyTo(nc, 0);
-            nc.AddRange(cards);
-            st = new Stack(nc);
-            /*
             foreach (Card c in cards)
             {
-                st.Push(c);
-            }*/
+                st.Enqueue(c);
+            }
         }
 
         protected virtual void End()

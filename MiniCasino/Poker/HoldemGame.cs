@@ -39,7 +39,7 @@ namespace MiniCasino.Poker
             bb = 20;
             sb = bb / 2;
             Hands = 1;
-            st = new Stack(new Deck(4).ReturnDeck());
+            st = new Queue(new Deck(4).ReturnDeck());
             playerGroup = new List<CardPlayer>();
             logID = Guid.NewGuid().ToString();
             for (int i = 0; i < this.table.PlayerLimit(); i++)
@@ -104,8 +104,8 @@ namespace MiniCasino.Poker
                 if (player.Active == true)
                 {
                     player.BetsPlaced = false;
-                    player.AddCards((Card)st.Pop());
-                    player.AddCards((Card)st.Pop());
+                    player.AddCards((Card)st.Dequeue());
+                    player.AddCards((Card)st.Dequeue());
                 }
             }
         }
@@ -115,22 +115,22 @@ namespace MiniCasino.Poker
             ResetPlayerContext();
             tableCards = new List<Card>
             {
-                (Card)st.Pop(),
-                (Card)st.Pop(),
-                (Card)st.Pop()
+                (Card)st.Dequeue(),
+                (Card)st.Dequeue(),
+                (Card)st.Dequeue()
             };
         }
 
         private void Turn()
         {
             ResetPlayerContext();
-            tableCards.Add((Card)st.Pop());
+            tableCards.Add((Card)st.Dequeue());
         }
 
         private void River()
         {
             ResetPlayerContext();
-            tableCards.Add((Card)st.Pop());
+            tableCards.Add((Card)st.Dequeue());
         }
 
         private void Showdown()

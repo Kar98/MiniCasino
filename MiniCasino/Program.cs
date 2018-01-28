@@ -20,6 +20,9 @@ namespace MiniCasino
         static int gameID = 0;
         static List<CardGame> games = new List<CardGame>();
         static List<Room> rooms = new List<Room>();
+        static Queue<int> queue = new Queue<int>();
+        static Stack<int> stack = new Stack<int>();
+
 
         public static void Main(string[] args)
         {
@@ -30,11 +33,14 @@ namespace MiniCasino
             for (int i = 0; i < 1; i++)
             {
                 NewHoldenGame();
+                //NewBlackjackGame();
             }
 
             games.ForEach(a => {
                 tasks.Add(Task.Factory.StartNew(() => { a.StartGame(); }));
                     });
+
+            //Testing();
 
             HandleCommands();
             
@@ -146,6 +152,27 @@ namespace MiniCasino
             rooms.Add(new Room("101"));
         }
 
+        private static void Testing()
+        {
+            for(int i = 0;i < 10; i++)
+            {
+                queue.Enqueue(i);
+                stack.Push(i);
+            }
+            var q1 = queue.Dequeue();
+            var q2 = queue.Dequeue();
+            var q3 = queue.Dequeue();
+            var s1 = stack.Pop();
+            var s2 = stack.Pop();
+            var s3 = stack.Pop();
+
+            queue.Enqueue(q1);
+            queue.Enqueue(q2);
+            queue.Enqueue(q3);
+            stack.Push(s1);
+            stack.Push(s2);
+            stack.Push(s3);
+        }
         
     }
 }
