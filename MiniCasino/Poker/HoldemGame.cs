@@ -56,8 +56,7 @@ namespace MiniCasino.Poker
         private void Main()
         {
             /* TODO: POKER GAME
-             * Need a way to insert items to the back of the stack or reshuffle the whole deck again.
-             * Card evaluation
+             * Determine winner
              * Pot logic - sides pots
              * Enable actual play from console
              * 
@@ -135,21 +134,8 @@ namespace MiniCasino.Poker
 
         private void Showdown()
         {
-            /*
-             * 4 people
-             * All need to evaluate what they have
-             
-             * * Pass the cards off to somewhere
-             * 1 - 
-             * 2
-             * 3
-             * 4
-             * 
-             
-             */
-
             PokerEvaluator pe = new PokerEvaluator(availablePlayers, tableCards);
-
+            pe.Winner();
             
             // if no winner, then run side pot, else give all to winner.
 

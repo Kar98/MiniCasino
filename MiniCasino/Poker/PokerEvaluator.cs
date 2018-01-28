@@ -14,23 +14,17 @@ namespace MiniCasino.Poker
 {
     public class PokerEvaluator
     {
-        public Dictionary<PokerPlayer,int> rankings;
+        public Dictionary<PokerPlayer, Hand> rankings;
         private List<PokerPlayer> players;
         private List<Card> tableCards;
 
         /*
          * TODO: poker evaluation
          * Get high card value
-         * Logic for straight
-         * Logic for flush
          * Logic for pairs and triples
          * 
          
              */
-
-            public enum Testing {  ONE, TWO, THREE };
-
-        
 
         public enum PokerHands {
             UNRANKED = 0,
@@ -62,24 +56,24 @@ namespace MiniCasino.Poker
 
         public PokerEvaluator(List<PokerPlayer> _players, List<Card> _tableCards)
         {
-            rankings = new Dictionary<PokerPlayer, int>();
+            rankings = new Dictionary<PokerPlayer, Hand>();
             tableCards = _tableCards;
             players = _players;
-            foreach(var p in _players)
+            foreach (var p in _players)
             {
-                rankings.Add(p, 0);
+                rankings.Add(p, new Hand(PokerHands.UNRANKED));
             }
             Run();
         }
 
         public PokerEvaluator(PokerPlayer _player, List<Card> _tableCards)
         {
-            rankings = new Dictionary<PokerPlayer, int>();
+            rankings = new Dictionary<PokerPlayer, Hand>();
             tableCards = _tableCards;
 
             players.Add(_player);
-            rankings.Add(_player, 0);
-            
+            rankings.Add(_player, new Hand(PokerHands.UNRANKED));
+
             Run();
         }
 
@@ -89,12 +83,13 @@ namespace MiniCasino.Poker
             return null;
         }
 
-        public void Run()
+        public PokerPlayer Run()
         {
-            foreach(var p in players)
+            foreach (var p in players)
             {
-                rankings[p] = (int)Evaluate(p.ReturnCards(), tableCards);
+                rankings[p] = Evaluate(p.ReturnCards(), tableCards);
             }
+            return Winner();
         }
 
         public void SetPlayerList(List<PokerPlayer> _players)
@@ -102,34 +97,59 @@ namespace MiniCasino.Poker
             players = _players;
         }
 
-        private PokerHands Evaluate(List<Card> playerCards,List<Card> tableCards)
+        private Hand Evaluate(List<Card> playerCards, List<Card> tableCards)
         {
-            bool flush;
-            bool straight;
-            char highCard;
+            bool flush = false;
+            bool straight = false;
+            int highCard = -1;
+            List<Hand> potentialHands = new List<Hand>();
             /*
-             * Flush
-             * Straight
-             * High card.
              * Eval pairs
              */
             var catCards = new List<Card>();
             catCards.AddRange(playerCards);
             catCards.AddRange(tableCards);
 
-            flush = IsFlush(catCards);
+            highCard = HighCard(catCards);
+            FindPairsOrTriples(catCards).AddRange(potentialHands);
 
-            straight = IsStraight(catCards);
+            //Check to see if it's a 2 pair.
+            if(potentialHands.Count(a => a.HandType == PokerHands.PAIR) >= 2)
+            {
 
-            if (straight == true)
-                Console.WriteLine("STRAIGHT");
+            }
 
-            if (flush == true)
-                Console.WriteLine("FLUSH");
+            //Get card values:
+            if (IsFlush(catCards))
+            {
+                potentialHands.Add(new Hand(PokerHands.FLUSH));
+                flush = true;
+            }
+
+            if (IsStraight(catCards))
+            {
+                potentialHands.Add(new Hand(PokerHands.STRAIGHT));
+                straight = true;
+            }
+
+            //Check for high value hands and return straight away.
+            if(straight && flush && highCard == Card.order.Last())
+            {
+                return new Hand(PokerHands.RFLUSH);
+            }else if(straight && flush)
+            {
+                return new Hand(PokerHands.SFLUSH);
+            }
+
+            potentialHands.Max(a => (int)a.HandType);
+
+            
+                
 
 
 
-            return PokerHands.UNRANKED;
+
+            return new Hand(PokerHands.UNRANKED);
         }
 
         private bool IsFlush(List<Card> cards)
@@ -165,6 +185,7 @@ namespace MiniCasino.Poker
 
         }
 
+
         private bool IsStraight(List<Card> cards)
         {
             int straightCount = 1; // number of cards found that are in sequence. 
@@ -172,17 +193,13 @@ namespace MiniCasino.Poker
             int maxFailures = 10 - cards.Count; // 7 cards = 3, 6 = 2, 5 = 1. Any lower and it's impossible to have a straight.
 
             //Convert the Card objecet to a easily sortable int. The higher then int the higher the card value.
-            List<int> cardsInt = new List<int>();
-            foreach(var c in cards)
-            {
-                cardsInt.Add(c.FindOrder(c.Number));
-            }
+            var cardsInt = ConvertCardsToIntValues(cards);
 
             cardsInt.Distinct(); //clear dupes. Only needed for straight.
             //Sort in ascending.
             CardComparerAsc cca = new CardComparerAsc();
             cardsInt.Sort(cca);
-            PrintStuff(cardsInt);
+
 
             for (int i = 0; i < cardsInt.Count; i++)
             {
@@ -213,19 +230,93 @@ namespace MiniCasino.Poker
                     return false;
                 }
             }
-
-
             return false;
         }
 
-        private bool HighCard(List<Card> cards)
+        private bool IsFullHouse(List<Hand> hands)
         {
-            return false;
+            bool triple = false;
+            bool pair = false;
+            foreach (var h in hands)
+            {
+                if (h.HandType == PokerHands.TRIPLE)
+                    triple = true;
+                if (h.HandType == PokerHands.PAIR)
+                    pair = true;
+            }
+            if (triple && pair)
+                return true;
+            else
+                return false;
+        }
+
+        private List<Hand> FindPairsOrTriples(List<Card> cards)
+        {
+            var ints = ConvertCardsToIntValues(cards);
+            List<Hand> currentHands = new List<Hand>();
+
+            var query = from x in ints
+                        group x by x into g
+                        let count = g.Count()
+                        orderby count descending
+                        select new { Value = g.Key, Count = count };
+
+            bool tripleFound = false;
+            foreach (var q in query)
+            {
+                if(q.Count == 4)
+                {
+                    currentHands.Add(new Hand(PokerHands.FOURKIND, (int)PokerHands.FOURKIND));
+                    return currentHands;
+                }
+                if (q.Count == 3)
+                {
+                    //If a triple has already been assigned, get the highest triple value card.
+                    if (tripleFound == false)
+                    {
+                        tripleFound = true;
+                        currentHands.Add(new Hand(PokerHands.TRIPLE, q.Value));
+                    }
+                    else
+                    {
+                        var newHand = new Hand(PokerHands.TRIPLE, q.Value);
+                        if (newHand.HighCard > currentHands.First(a => a.HandType == PokerHands.TRIPLE).HighCard)
+                        {
+                            currentHands.Remove(currentHands.First(a => a.HandType == PokerHands.TRIPLE));
+                            currentHands.Add(newHand);
+                        }       
+                    }
+                }
+                if(q.Count == 2)
+                {
+                    currentHands.Add(new Hand(PokerHands.PAIR, q.Value));
+                }
+            }
+
+
+            return currentHands;
+        }
+
+        private int HighCard(List<Card> cards)
+        {
+            var ints = ConvertCardsToIntValues(cards);
+            ints.Sort(new CardComparerDesc());
+            return ints[0];
+        }
+
+        private List<int> ConvertCardsToIntValues(List<Card> cards)
+        {
+            List<int> cardsInt = new List<int>();
+            foreach (var c in cards)
+            {
+                cardsInt.Add(c.FindOrder(c.Number));
+            }
+            return cardsInt;
         }
 
         private void PrintStuff(List<Card> cards)
         {
-            foreach(var c in cards)
+            foreach (var c in cards)
             {
                 Console.Write(c.Number + ",");
             }
@@ -235,14 +326,40 @@ namespace MiniCasino.Poker
         {
             foreach (var c in cards)
             {
-                Console.Write(c+",");
+                Console.Write(c + ",");
             }
             Console.WriteLine("");
         }
 
     }
 
-    public class CardComparerAsc : IComparer<int>
+    public class Hand
+    {
+        public int HighCard { get; protected set; }
+        public PokerEvaluator.PokerHands HandType { get; protected set; }
+
+        public Hand(List<Card> cards)
+        {
+            if(cards.Count == 3)
+            {
+                HandType = PokerEvaluator.PokerHands.TRIPLE;
+
+            }
+            else if (cards.Count == 2)
+            {
+                HandType = PokerEvaluator.PokerHands.PAIR;
+            }
+        }
+
+        public Hand(PokerEvaluator.PokerHands presetHand,int highCardValue = -1)
+        {
+            HighCard = highCardValue;
+            HandType = presetHand;
+        }
+    }
+
+
+    internal class CardComparerAsc : IComparer<int>
     {
         public int Compare(int x, int y)
         {
@@ -257,7 +374,7 @@ namespace MiniCasino.Poker
         }
     }
 
-    public class CardComparerDesc : IComparer<int>
+    internal class CardComparerDesc : IComparer<int>
     {
         public int Compare(int x, int y)
         {
@@ -271,6 +388,15 @@ namespace MiniCasino.Poker
             }
         }
     }
+
+    internal class HandComparer : IComparer<Hand>
+    {
+        public int Compare(Hand x, Hand y)
+        {
+            throw new Exception();
+        }
+    }
+
 
 
 }
