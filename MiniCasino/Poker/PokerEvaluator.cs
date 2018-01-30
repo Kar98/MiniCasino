@@ -1,13 +1,7 @@
-﻿using MiniCasino.Patrons;
-using MiniCasino.Patrons.Staff;
-using MiniCasino.PlayingCards;
-using MiniCasino.Rooms;
+﻿using MiniCasino.PlayingCards;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 
 namespace MiniCasino.Poker
@@ -20,9 +14,9 @@ namespace MiniCasino.Poker
 
         /*
          * TODO: poker evaluation
-         * Get high card value
-         * Logic for pairs and triples
-         * 
+         * Assign a winner when there is a tie
+         * Test the logic for assigning 2 pairs
+         * Fix two pair assigning the same pairs 
          
              */
 
@@ -80,16 +74,48 @@ namespace MiniCasino.Poker
 
         public PokerPlayer Winner()
         {
+            var highestHand = rankings.Values.MaxObject(item => (int)item.HandType);
+            var totalWinners = rankings.Values.Count(a => a.HandType == highestHand.HandType);
+
+            if(totalWinners > 1)
+            {
+                List<PokerPlayer> tiePlayers = new List<PokerPlayer>();
+                foreach(var p in rankings.Keys)
+                {
+                    if (rankings[p] == highestHand)
+                        tiePlayers.Add(p);
+                }
+                Console.WriteLine("Tie breaker hit");
+                return TieBreaker(tiePlayers);
+            }
+            else
+            {
+                foreach (var p in rankings.Keys)
+                {
+                    if (rankings[p] == highestHand)
+                    {
+                        Console.WriteLine("Winning hand : " + rankings[p].HandType.ToString());
+                        return p;
+                    }
+                        
+                }
+            }
+
             return null;
         }
 
-        public PokerPlayer Run()
+        private PokerPlayer TieBreaker(List<PokerPlayer> players)
+        {
+            return null;
+        }
+
+        public void Run()
         {
             foreach (var p in players)
             {
                 rankings[p] = Evaluate(p.ReturnCards(), tableCards);
+                
             }
-            return Winner();
         }
 
         public void SetPlayerList(List<PokerPlayer> _players)
@@ -101,25 +127,20 @@ namespace MiniCasino.Poker
         {
             bool flush = false;
             bool straight = false;
-            int highCard = -1;
+            int highCardOrder = -1;
             List<Hand> potentialHands = new List<Hand>();
-            /*
-             * Eval pairs
-             */
+
             var catCards = new List<Card>();
             catCards.AddRange(playerCards);
             catCards.AddRange(tableCards);
 
-            highCard = HighCard(catCards);
-            FindPairsOrTriples(catCards).AddRange(potentialHands);
-
-            //Check to see if it's a 2 pair.
-            if(potentialHands.Count(a => a.HandType == PokerHands.PAIR) >= 2)
-            {
-
-            }
+            catCards.ForEach(a => Console.Write($"{a.Suit}{a.Number} "));
+            Console.WriteLine();
 
             //Get card values:
+            highCardOrder = HighCard(catCards).Order;
+            potentialHands.AddRange(FindPairsOrTriples(catCards));
+            
             if (IsFlush(catCards))
             {
                 potentialHands.Add(new Hand(PokerHands.FLUSH));
@@ -133,7 +154,7 @@ namespace MiniCasino.Poker
             }
 
             //Check for high value hands and return straight away.
-            if(straight && flush && highCard == Card.order.Last())
+            if(straight && flush && highCardOrder == Card.order.Last())
             {
                 return new Hand(PokerHands.RFLUSH);
             }else if(straight && flush)
@@ -141,13 +162,20 @@ namespace MiniCasino.Poker
                 return new Hand(PokerHands.SFLUSH);
             }
 
-            potentialHands.Max(a => (int)a.HandType);
-
+            potentialHands.ForEach(a => Console.Write(a.HandType.ToString() + " "));
             
-                
 
-
-
+            if (potentialHands.Count > 0)
+            {
+                var maxHand = potentialHands.OrderByDescending(a => (int)a.HandType).First();
+                Console.WriteLine(" * Best hand : " + maxHand.HandType.ToString());
+                return maxHand;
+            }else if(potentialHands.Count == 0)
+            {
+                //If nothing found use the High card value.
+                Console.WriteLine($"High card: {highCardOrder}");
+                return new Hand((PokerHands)highCardOrder);
+            }
 
             return new Hand(PokerHands.UNRANKED);
         }
@@ -292,16 +320,22 @@ namespace MiniCasino.Poker
                     currentHands.Add(new Hand(PokerHands.PAIR, q.Value));
                 }
             }
-
+            //If a 2 pair is found, add a new TWOPAIR Hand object.
+            if (currentHands.Count(a => a.HandType == PokerHands.PAIR) >= 2)
+            {
+                var pairs = currentHands.Where(a => a.HandType == PokerHands.PAIR).ToList();
+                pairs.Sort(new HandComparerDesc());
+                
+                currentHands.Add(new Hand(PokerHands.TWOPAIR, pairs[0].HighCard, pairs[1].HighCard));
+            }
 
             return currentHands;
         }
 
-        private int HighCard(List<Card> cards)
+        private Card HighCard(List<Card> cards)
         {
-            var ints = ConvertCardsToIntValues(cards);
-            ints.Sort(new CardComparerDesc());
-            return ints[0];
+            cards.Sort(new CardComparerByOrderDesc());
+            return cards[0];
         }
 
         private List<int> ConvertCardsToIntValues(List<Card> cards)
@@ -336,28 +370,31 @@ namespace MiniCasino.Poker
     public class Hand
     {
         public int HighCard { get; protected set; }
+        public int HighCard2 { get; protected set; }
         public PokerEvaluator.PokerHands HandType { get; protected set; }
-
-        public Hand(List<Card> cards)
-        {
-            if(cards.Count == 3)
-            {
-                HandType = PokerEvaluator.PokerHands.TRIPLE;
-
-            }
-            else if (cards.Count == 2)
-            {
-                HandType = PokerEvaluator.PokerHands.PAIR;
-            }
-        }
 
         public Hand(PokerEvaluator.PokerHands presetHand,int highCardValue = -1)
         {
             HighCard = highCardValue;
             HandType = presetHand;
+            if(presetHand <= PokerEvaluator.PokerHands.AHIGH)
+            {
+                highCardValue = (int)presetHand;
+            }
         }
-    }
 
+        public Hand(PokerEvaluator.PokerHands presetHand, int highCardValue, int highCardValue2)
+        {
+            HighCard = highCardValue;
+            HighCard2 = highCardValue;
+            HandType = presetHand;
+            if (presetHand <= PokerEvaluator.PokerHands.AHIGH)
+            {
+                highCardValue = (int)presetHand;
+            }
+        }
+
+    }
 
     internal class CardComparerAsc : IComparer<int>
     {
@@ -373,7 +410,6 @@ namespace MiniCasino.Poker
             }
         }
     }
-
     internal class CardComparerDesc : IComparer<int>
     {
         public int Compare(int x, int y)
@@ -389,14 +425,80 @@ namespace MiniCasino.Poker
         }
     }
 
-    internal class HandComparer : IComparer<Hand>
+    internal class CardComparerByOrderDesc : Comparer<Card>
     {
-        public int Compare(Hand x, Hand y)
+        public override int Compare(Card x, Card y)
         {
-            throw new Exception();
+            //Descending
+            if (x.Order > y.Order)
+            {
+                return -1;
+            }
+            else
+            {
+                return 1;
+            }
+        }
+    }
+    internal class HandComparer : Comparer<Hand>
+    {
+        public override int Compare(Hand x, Hand y)
+        {
+            if (x.HighCard > y.HighCard)
+            {
+                return 1;
+            }
+            else
+            {
+                return -1;
+            }
+        }
+    }
+    internal class HandComparerDesc : Comparer<Hand>
+    {
+        public override int Compare(Hand x, Hand y)
+        {
+            if (x.HighCard > y.HighCard)
+            {
+                return -1;
+            }
+            else
+            {
+                return 1;
+            }
         }
     }
 
-
+    static class EnumerableExtensions
+    {
+        public static T MaxObject<T, U>(this IEnumerable<T> source, Func<T, U> selector)
+          where U : IComparable<U>
+        {
+            if (source == null) throw new ArgumentNullException("source");
+            bool first = true;
+            T maxObj = default(T);
+            U maxKey = default(U);
+            foreach (var item in source)
+            {
+                if (first)
+                {
+                    maxObj = item;
+                    maxKey = selector(maxObj);
+                    first = false;
+                }
+                else
+                {
+                    U currentKey = selector(item);
+                    if (currentKey.CompareTo(maxKey) > 0)
+                    {
+                        maxKey = currentKey;
+                        maxObj = item;
+                    }
+                }
+            }
+            if (first) throw new InvalidOperationException("Sequence is empty.");
+            return maxObj;
+        }
+    }
 
 }

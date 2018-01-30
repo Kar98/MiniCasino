@@ -135,10 +135,18 @@ namespace MiniCasino.Poker
         private void Showdown()
         {
             PokerEvaluator pe = new PokerEvaluator(availablePlayers, tableCards);
-            pe.Winner();
+            var winner = pe.Winner();
             
             // if no winner, then run side pot, else give all to winner.
-
+            if(winner != null)
+            {
+                winner.Chips += pot;
+            }
+            else
+            {
+                Console.WriteLine("no winner");
+                //Run the split logic for a draw.
+            }
 
 
         }
