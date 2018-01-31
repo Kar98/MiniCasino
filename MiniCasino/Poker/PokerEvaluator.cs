@@ -2,7 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-
+using System.Text;
 
 namespace MiniCasino.Poker
 {
@@ -11,14 +11,6 @@ namespace MiniCasino.Poker
         public Dictionary<PokerPlayer, Hand> rankings;
         private List<PokerPlayer> players;
         private List<Card> tableCards;
-
-        /*
-         * TODO: poker evaluation
-         * Assign a winner when there is a tie
-         * Test the logic for assigning 2 pairs
-         * Fix two pair assigning the same pairs 
-         
-             */
 
         public enum PokerHands {
             UNRANKED = 0,
@@ -55,7 +47,7 @@ namespace MiniCasino.Poker
             players = _players;
             foreach (var p in _players)
             {
-                rankings.Add(p, new Hand(PokerHands.UNRANKED));
+                rankings.Add(p, new Hand(PokerHands.UNRANKED,_tableCards));
             }
             Run();
         }
@@ -66,13 +58,13 @@ namespace MiniCasino.Poker
             tableCards = _tableCards;
 
             players.Add(_player);
-            rankings.Add(_player, new Hand(PokerHands.UNRANKED));
+            rankings.Add(_player, new Hand(PokerHands.UNRANKED,_tableCards));
 
             Run();
         }
 
 
-        public PokerPlayer Winner()
+        public List<PokerPlayer> Winner()
         {
             var highestHand = rankings.Values.MaxObject(item => (int)item.HandType);
             var totalWinners = rankings.Values.Count(a => a.HandType == highestHand.HandType);
@@ -82,11 +74,11 @@ namespace MiniCasino.Poker
                 List<PokerPlayer> tiePlayers = new List<PokerPlayer>();
                 foreach(var p in rankings.Keys)
                 {
-                    if (rankings[p] == highestHand)
+                    if (rankings[p].HandType == highestHand.HandType)
                         tiePlayers.Add(p);
                 }
                 Console.WriteLine("Tie breaker hit");
-                return TieBreaker(tiePlayers);
+                return TieBreaker(tiePlayers, highestHand.HandType);
             }
             else
             {
@@ -94,8 +86,8 @@ namespace MiniCasino.Poker
                 {
                     if (rankings[p] == highestHand)
                     {
-                        Console.WriteLine("Winning hand : " + rankings[p].HandType.ToString());
-                        return p;
+                        Console.WriteLine("Winning hand : " + rankings[p].HandType.ToString() + " " + rankings[p].HighCard);
+                        return new List<PokerPlayer>() { p };
                     }
                         
                 }
@@ -104,9 +96,66 @@ namespace MiniCasino.Poker
             return null;
         }
 
-        private PokerPlayer TieBreaker(List<PokerPlayer> players)
+        private List<PokerPlayer> TieBreaker(List<PokerPlayer> players,PokerHands highestHand)
         {
+            Dictionary<Hand, PokerPlayer> reverseDic = new Dictionary<Hand, PokerPlayer>();
+            var winnerList = new List<PokerPlayer>();
+            
+            foreach (var p in players)
+            {
+                reverseDic.Add(rankings[p], p);
+            }
+
+            if(highestHand == PokerHands.TWOPAIR || highestHand == PokerHands.FULLHOUSE)
+            {
+                var tieList = reverseDic.Keys.ToList();
+                tieList.Sort(new HandComparerMultiPairDesc());
+                var winners = GetWinnersIfEqual(tieList);
+                foreach (var w in winners)
+                {
+                    winnerList.Add(reverseDic[w]);
+                }
+                return winnerList;
+            }
+            /*else if (highestHand == PokerHands.FULLHOUSE)
+            {
+                var tieList = reverseDic.Keys.ToList();
+                tieList.Sort(new HandComparerMultiPairDesc());
+                var winners = GetWinnersIfEqual(tieList);
+                foreach (var w in winners)
+                {
+                    winnerList.Add(reverseDic[w]);
+                }
+                return winnerList;
+            }*/
+            else
+            {
+                var tieList = reverseDic.Keys.ToList();
+                tieList.Sort(new HandComparerDesc());
+                var winners = GetWinnersIfEqual(tieList);
+                foreach (var w in winners)
+                {
+                    winnerList.Add(reverseDic[w]);
+                }
+                return winnerList;
+            }
+
+
             return null;
+        }
+
+        private List<Hand> GetWinnersIfEqual(List<Hand> listOfHands)
+        {
+            List<Hand> winnerList = new List<Hand>() { listOfHands[0] };
+
+            for (int i = 0; i < listOfHands.Count - 1; i++)
+            {
+                if (listOfHands[0].Equals(listOfHands[i + 1]))
+                {
+                    winnerList.Add(listOfHands[i + 1]);
+                }
+            }
+            return winnerList;
         }
 
         public void Run()
@@ -134,32 +183,33 @@ namespace MiniCasino.Poker
             catCards.AddRange(playerCards);
             catCards.AddRange(tableCards);
 
-            catCards.ForEach(a => Console.Write($"{a.Suit}{a.Number} "));
+            catCards.ForEach(a => Console.Write($"{a.Suit.ToString()[0]}{a.Number} "));
             Console.WriteLine();
 
             //Get card values:
             highCardOrder = HighCard(catCards).Order;
             potentialHands.AddRange(FindPairsOrTriples(catCards));
-            
-            if (IsFlush(catCards))
+            var suit = IsFlush(catCards);
+
+            if(suit != null)
             {
-                potentialHands.Add(new Hand(PokerHands.FLUSH));
+                potentialHands.Add(new Hand(PokerHands.FLUSH, catCards));
                 flush = true;
             }
 
             if (IsStraight(catCards))
             {
-                potentialHands.Add(new Hand(PokerHands.STRAIGHT));
+                potentialHands.Add(new Hand(PokerHands.STRAIGHT, catCards));
                 straight = true;
             }
 
             //Check for high value hands and return straight away.
             if(straight && flush && highCardOrder == Card.order.Last())
             {
-                return new Hand(PokerHands.RFLUSH);
+                return new Hand(PokerHands.RFLUSH, catCards);
             }else if(straight && flush)
             {
-                return new Hand(PokerHands.SFLUSH);
+                return new Hand(PokerHands.SFLUSH, catCards);
             }
 
             potentialHands.ForEach(a => Console.Write(a.HandType.ToString() + " "));
@@ -174,13 +224,13 @@ namespace MiniCasino.Poker
             {
                 //If nothing found use the High card value.
                 Console.WriteLine($"High card: {highCardOrder}");
-                return new Hand((PokerHands)highCardOrder);
+                return new Hand((PokerHands)highCardOrder, catCards);
             }
 
-            return new Hand(PokerHands.UNRANKED);
+            return new Hand(PokerHands.UNRANKED, catCards);
         }
 
-        private bool IsFlush(List<Card> cards)
+        private Card.Suits? IsFlush(List<Card> cards)
         {
             int heart = 0, diamond = 0, club = 0, spade = 0;
 
@@ -201,15 +251,24 @@ namespace MiniCasino.Poker
                         heart++;
                         break;
                     default:
-                        return false;
+                        return null;
                 }
 
             }
 
-            if (heart == 5 || diamond == 5 || club == 5 || spade == 5)
-                return true;
+            if (diamond >= 5)
+                return Card.Suits.DIAMOND;
 
-            return false;
+            if (heart >= 5)
+                return Card.Suits.HEART;
+
+            if (club >= 5)
+                return Card.Suits.CLUB;
+
+            if (spade >= 5)
+                return Card.Suits.SPADE;
+
+            return null;
 
         }
 
@@ -229,7 +288,7 @@ namespace MiniCasino.Poker
             cardsInt.Sort(cca);
 
 
-            for (int i = 0; i < cardsInt.Count; i++)
+            for (int i = 0; i < cardsInt.Count - 1; i++)
             {
                 if (straightCount == 5)
                     return true;
@@ -249,12 +308,12 @@ namespace MiniCasino.Poker
                 }
                 catch (IndexOutOfRangeException)
                 {
-                    Console.WriteLine("Straight exception caught");
+                    Console.WriteLine("Straight exception caught - Out of index arg");
                     return false;
                 }
                 catch (ArgumentOutOfRangeException)
                 {
-                    Console.WriteLine("Straight exception caught");
+                    Console.WriteLine("Straight exception caught - Out of range arg");
                     return false;
                 }
             }
@@ -294,7 +353,7 @@ namespace MiniCasino.Poker
             {
                 if(q.Count == 4)
                 {
-                    currentHands.Add(new Hand(PokerHands.FOURKIND, (int)PokerHands.FOURKIND));
+                    currentHands.Add(new Hand(PokerHands.FOURKIND, cards, (int)PokerHands.FOURKIND));
                     return currentHands;
                 }
                 if (q.Count == 3)
@@ -303,11 +362,11 @@ namespace MiniCasino.Poker
                     if (tripleFound == false)
                     {
                         tripleFound = true;
-                        currentHands.Add(new Hand(PokerHands.TRIPLE, q.Value));
+                        currentHands.Add(new Hand(PokerHands.TRIPLE, cards, q.Value));
                     }
                     else
                     {
-                        var newHand = new Hand(PokerHands.TRIPLE, q.Value);
+                        var newHand = new Hand(PokerHands.TRIPLE, cards, q.Value);
                         if (newHand.HighCard > currentHands.First(a => a.HandType == PokerHands.TRIPLE).HighCard)
                         {
                             currentHands.Remove(currentHands.First(a => a.HandType == PokerHands.TRIPLE));
@@ -317,7 +376,7 @@ namespace MiniCasino.Poker
                 }
                 if(q.Count == 2)
                 {
-                    currentHands.Add(new Hand(PokerHands.PAIR, q.Value));
+                    currentHands.Add(new Hand(PokerHands.PAIR, cards, q.Value));
                 }
             }
             //If a 2 pair is found, add a new TWOPAIR Hand object.
@@ -326,7 +385,15 @@ namespace MiniCasino.Poker
                 var pairs = currentHands.Where(a => a.HandType == PokerHands.PAIR).ToList();
                 pairs.Sort(new HandComparerDesc());
                 
-                currentHands.Add(new Hand(PokerHands.TWOPAIR, pairs[0].HighCard, pairs[1].HighCard));
+                currentHands.Add(new Hand(PokerHands.TWOPAIR, cards, pairs[0].HighCard, pairs[1].HighCard));
+            }
+            //If a 2 pair and triple is found, then add a new FULL HOUSE object.
+            if(currentHands.Count(a => a.HandType == PokerHands.PAIR) >= 1 && currentHands.Count(a => a.HandType == PokerHands.TRIPLE) >= 1)
+            {
+                var pair = currentHands.Where(a => a.HandType == PokerHands.PAIR).First();
+                var triple = currentHands.Where(a => a.HandType == PokerHands.TRIPLE).First();
+
+                currentHands.Add(new Hand(PokerHands.FULLHOUSE, cards, triple.HighCard, pair.HighCard));
             }
 
             return currentHands;
@@ -348,7 +415,7 @@ namespace MiniCasino.Poker
             return cardsInt;
         }
 
-        private void PrintStuff(List<Card> cards)
+        private void PrintCards(List<Card> cards)
         {
             foreach (var c in cards)
             {
@@ -356,7 +423,7 @@ namespace MiniCasino.Poker
             }
             Console.WriteLine("");
         }
-        private void PrintStuff(List<int> cards)
+        private void PrintCards(List<int> cards)
         {
             foreach (var c in cards)
             {
@@ -370,27 +437,93 @@ namespace MiniCasino.Poker
     public class Hand
     {
         public int HighCard { get; protected set; }
-        public int HighCard2 { get; protected set; }
+        public int HighCard2 { get; protected set; } // Only used for a TWO PAIR and FULLHOUSE.
         public PokerEvaluator.PokerHands HandType { get; protected set; }
+        public List<int> CardRankings { get; protected set; }
+        public string Readable { get; protected set; }
 
-        public Hand(PokerEvaluator.PokerHands presetHand,int highCardValue = -1)
+        public Hand(PokerEvaluator.PokerHands presetHand,List<Card> cards, int highCardValue = -1)
         {
             HighCard = highCardValue;
             HandType = presetHand;
+            CardRankings = new List<int>();
+            cards.ForEach(a => CardRankings.Add(a.Order));
+            CardRankings.Sort(new CardComparerDesc());
             if(presetHand <= PokerEvaluator.PokerHands.AHIGH)
             {
                 highCardValue = (int)presetHand;
             }
+            ConvertToReadable(cards);
+            
         }
 
-        public Hand(PokerEvaluator.PokerHands presetHand, int highCardValue, int highCardValue2)
+
+        public Hand(PokerEvaluator.PokerHands presetHand, List<Card> cards, int highCardValue, int highCardValue2)
         {
             HighCard = highCardValue;
-            HighCard2 = highCardValue;
+            HighCard2 = highCardValue2;
             HandType = presetHand;
+            CardRankings = new List<int>();
+            cards.ForEach(a => CardRankings.Add(a.Order));
+            CardRankings.Sort(new CardComparerDesc());
             if (presetHand <= PokerEvaluator.PokerHands.AHIGH)
             {
                 highCardValue = (int)presetHand;
+            }
+            ConvertToReadable(cards);
+        }
+
+        public Hand(PokerEvaluator.PokerHands presetHand, List<Card> cards, Card.Suits _suit, int highCardValue)
+        {
+            //Used for the flushes. Much easier passing the suit value then reworking it out again.
+            HighCard = highCardValue;
+            HandType = presetHand;
+            CardRankings = new List<int>();
+            cards.ForEach(a => {
+                if(a.Suit == _suit)
+                    CardRankings.Add(a.Order); });
+            if (CardRankings.Count < 5)
+                throw new Exception("Flush was passed to Hand constructor, but there were less than 5 valid cards for a flush");
+            CardRankings.Sort(new CardComparerDesc());
+            if (presetHand <= PokerEvaluator.PokerHands.AHIGH)
+            {
+                highCardValue = (int)presetHand;
+            }
+            ConvertToReadable(cards);
+        }
+
+        private void ConvertToReadable(List<Card> cards)
+        {
+            StringBuilder sb = new StringBuilder();
+            foreach(var c in cards)
+            {
+                var ch = c.Suit.ToString();
+                sb.Append($"{ch[0]}{c.Number} ");
+            }
+            Readable = sb.ToString();
+        }
+
+        public bool Equals(Hand compareHand)
+        {
+            if(this.HandType == compareHand.HandType)
+            {
+                int numOfCards = CardRankings.Count;
+                if (numOfCards > 5)
+                    numOfCards = 5; //Only 5 cards will ever get evaluated when checking for equality. These are part of the rules.
+
+
+                for (int i = 0;i < numOfCards; i++)
+                {
+                    if(this.CardRankings[i] != compareHand.CardRankings[i])
+                    {
+                        return false;
+                    }
+                }
+                return true;
+            }
+            else
+            {
+                return false;
             }
         }
 
@@ -458,13 +591,39 @@ namespace MiniCasino.Poker
     {
         public override int Compare(Hand x, Hand y)
         {
-            if (x.HighCard > y.HighCard)
+            if (x.HighCard < y.HighCard)
             {
-                return -1;
+                return 1;
             }
             else
             {
+                return -1;
+            }
+        }
+    }
+    internal class HandComparerMultiPairDesc : Comparer<Hand>
+    {
+        public override int Compare(Hand x, Hand y)
+        {
+            if(x.HighCard == y.HighCard)
+            {
+                if (x.HighCard2 < y.HighCard2)
+                {
+                    return 1;
+                }
+                else
+                {
+                    return -1;
+                }
+            }
+
+            if(x.HighCard < y.HighCard)
+            {
                 return 1;
+            }
+            else
+            {
+                return -1;
             }
         }
     }

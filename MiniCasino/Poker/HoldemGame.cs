@@ -56,8 +56,8 @@ namespace MiniCasino.Poker
         private void Main()
         {
             /* TODO: POKER GAME
-             * Determine winner
              * Pot logic - sides pots
+             * Player AI.
              * Enable actual play from console
              * 
              */
@@ -138,17 +138,20 @@ namespace MiniCasino.Poker
             var winner = pe.Winner();
             
             // if no winner, then run side pot, else give all to winner.
-            if(winner != null)
+            if(winner.Count == 1)
             {
-                winner.Chips += pot;
+                winner[0].Chips += pot;
             }
             else
             {
-                Console.WriteLine("no winner");
-                //Run the split logic for a draw.
+                Console.WriteLine("Multi win");
+                var splitPot = this.pot / winner.Count;
+                Console.WriteLine("Split pot = " + splitPot);
+                foreach (var w in winner)
+                {
+                    w.Chips += splitPot;
+                }
             }
-
-
         }
 
         private void Blinds()
