@@ -13,10 +13,11 @@ namespace MiniCasino.Blackjack
         protected List<Card> cards;
         protected int cardsValue;
 
-        public BlackjackPlayer(string address, DateTime bday, char sex, double startingMoney = 10.0) : base(address, bday, sex)
+        public BlackjackPlayer(string address, DateTime bday, char sex, bool playerControlled = false, double startingMoney = 100.0) : base(address, bday, sex)
         {
             Money = startingMoney;
             cards = new List<Card>();
+            this.PlayerControlled = playerControlled;
         }
 
         public int CardsValue { get => cardsValue; set => cardsValue = value; }

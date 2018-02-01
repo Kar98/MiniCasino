@@ -74,7 +74,10 @@ namespace MiniCasino.Blackjack
 
                 foreach (BlackjackPlayer bp in playerGroup)
                 {
-                    PlayerAI(bp);
+                    if (bp.PlayerControlled)
+                        HumanPlay(bp);
+                    else
+                        PlayerAI(bp);
                 }
 
                 DealerAI();
@@ -86,12 +89,23 @@ namespace MiniCasino.Blackjack
                     Logs.LogTrace("Player: " + bp.CardsValue, logID);
                     if (DecideOutcome(bp))
                     {
+                        if(bp.PlayerControlled == true)
+                        {
+                            Console.WriteLine("You win!");
+                        }
                         Logs.LogTrace("Winner");
                         var bet = betPool[bp];
                         bp.Money += bet*2;
                     }
                     else
+                    {
+                        if (bp.PlayerControlled == true)
+                        {
+                            Console.WriteLine("You lose");
+                        }
                         Logs.LogTrace("Loser", logID);
+                    }
+                        
                 }
                 ShuffleCardsBackIn();
                 PrintPlayersMoney();
@@ -103,7 +117,7 @@ namespace MiniCasino.Blackjack
                     run = false;
 
                 Logs.LogTrace($"*End {hands}*", logID);
-                Thread.Sleep(500);
+                Thread.Sleep(1500);
             }
             Console.WriteLine($"Game has ended {logID}");
         }
@@ -169,6 +183,11 @@ namespace MiniCasino.Blackjack
             pendingPlayers.Add(DefaultPatron());
         }
 
+        public override void AddSelf(bool playerControlled)
+        {
+            pendingPlayers.Add(DefaultPatron(playerControlled));
+        }
+
         private void PlayerAI(BlackjackPlayer bp)
         {
             int cardValue = 0;
@@ -202,6 +221,40 @@ namespace MiniCasino.Blackjack
                     cardValue = CalcCards(bp.ReturnCards());
                 }
                 bp.CardsValue = cardValue;
+            }
+            
+        }
+
+        private void HumanPlay(BlackjackPlayer player)
+        {
+            bool awaitResp = true;
+            Console.Clear();
+            Console.WriteLine("h to hit | s to stay | split to split | q to quit");
+            while (awaitResp)
+            {
+                PrintCards(player);
+                if (player.CardsValue > 21)
+                {
+                    awaitResp = false;
+                    Console.WriteLine("Bust!");
+                }
+                var action = Console.ReadLine();
+                switch (action)
+                {
+                    case "h":
+                        Hit(player);
+                        break;
+                    case "s":
+                        awaitResp = false;
+                        break;
+                    case "split":
+                        break;
+                    case "q":
+                        break;
+                    default:
+                        Console.WriteLine("Enter a value");
+                        break;
+                }
             }
             
         }
@@ -260,6 +313,12 @@ namespace MiniCasino.Blackjack
             
         }
 
+        private void PrintCards(BlackjackPlayer player)
+        {
+            player.ReturnCards().ForEach(a => { Console.Write(a.ToString()); });
+            Console.WriteLine("");
+        }
+
         private int CalcCards(List<Card> cards, bool aceIsOne = false)
         {
             int cardValues = 0;
@@ -314,9 +373,9 @@ namespace MiniCasino.Blackjack
                 return false;
         }
 
-        private static BlackjackPlayer DefaultPatron()
+        private static BlackjackPlayer DefaultPatron(bool playerControlled = false)
         {
-            return new BlackjackPlayer("321 Default St", new DateTime(1984, 1, 1), 'M');
+            return new BlackjackPlayer("321 Default St", new DateTime(1984, 1, 1), 'M', playerControlled);
         }
 
         private bool FindAce(List<Card> cards)

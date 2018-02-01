@@ -10,6 +10,8 @@ using MiniCasino.Poker;
 
 /*
  * TODO: Have a DB where the rooms/people can be stored so no hard coding needed.
+ * Have SQL scripts to auto setup the DB if needed.
+ * TODO: Add the ability to play blackjack from the console.
  */
 
 namespace MiniCasino
@@ -32,7 +34,7 @@ namespace MiniCasino
 
             for (int i = 0; i < 1; i++)
             {
-                NewHoldenGame();
+                //NewHoldenGame();
                 //NewBlackjackGame();
             }
 
@@ -40,7 +42,12 @@ namespace MiniCasino
                 tasks.Add(Task.Factory.StartNew(() => { a.StartGame(); }));
                     });
 
-            //Testing();
+            string s;
+            Console.WriteLine("Pre add");
+            while ((s = Console.ReadLine()) != null)
+            {
+                Console.WriteLine($"echo: {s}");
+            }
 
             HandleCommands();
             
@@ -73,15 +80,18 @@ namespace MiniCasino
                     case "bj":
                         tasks.Add(Task.Factory.StartNew(() => { NewBlackjackGame().StartGame(); }));
                         break;
+                    case "poker":
+                        tasks.Add(Task.Factory.StartNew(() => { NewHoldenGame().StartGame(); }));
+                        break;
                     case "s":
                         stop = true;
                         tasks.Clear();
                         break;
+                    case "self":
+                        tasks.Add(AddSelfToGameAsync(0));
+                        break;
                     case "games":
                         PrintGames(rooms[0]);
-                        break;
-                    case "p":
-                        tasks.Add(Task.Factory.StartNew(() => { NewHoldenGame().StartGame(); }));
                         break;
                     default:
                         break;
@@ -101,6 +111,11 @@ namespace MiniCasino
         private static async Task AddPlayerToGameAsync(int Gameindex)
         {
             await Task.Factory.StartNew(() => games[Gameindex].AddDefaultPlayer());
+        }
+
+        private static async Task AddSelfToGameAsync(int gameIndex)
+        {
+            await Task.Factory.StartNew(() => games[gameIndex].AddSelf(true));
         }
 
         private static void CheckForValidGames()
@@ -150,28 +165,6 @@ namespace MiniCasino
         private static void GenerateRooms()
         {
             rooms.Add(new Room("101"));
-        }
-
-        private static void Testing()
-        {
-            for(int i = 0;i < 10; i++)
-            {
-                queue.Enqueue(i);
-                stack.Push(i);
-            }
-            var q1 = queue.Dequeue();
-            var q2 = queue.Dequeue();
-            var q3 = queue.Dequeue();
-            var s1 = stack.Pop();
-            var s2 = stack.Pop();
-            var s3 = stack.Pop();
-
-            queue.Enqueue(q1);
-            queue.Enqueue(q2);
-            queue.Enqueue(q3);
-            stack.Push(s1);
-            stack.Push(s2);
-            stack.Push(s3);
         }
         
     }

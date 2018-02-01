@@ -42,6 +42,11 @@ namespace MiniCasino
         public virtual void AddDefaultPlayer()
         { throw new NotImplementedException(); }
 
+        public virtual void AddSelf(bool playerControlled)
+        {
+            throw new NotImplementedException();
+        }
+
         protected List<Person> CastToPerson(List<CardPlayer> list)
         {
             List<Person> returnList = new List<Person>();
@@ -81,6 +86,11 @@ namespace MiniCasino
         protected virtual void End()
         {
             throw new NotImplementedException();
+        }
+
+        public void Stop()
+        {
+            run = false;
         }
 
         public bool IsRunning()

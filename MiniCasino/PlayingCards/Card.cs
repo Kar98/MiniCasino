@@ -43,6 +43,11 @@ namespace MiniCasino.PlayingCards
             return order[o].ToString();
         }
 
+        public override string ToString()
+        {
+            return $"{Suit.ToString()[0]}{Number} ";
+        }
+
 
     }
 }

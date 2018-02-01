@@ -15,6 +15,7 @@ namespace MiniCasino.Patrons
         public bool Verified { get; protected set; }
         public string Lastname { get; protected set; }
         public string Firstname { get; protected set; }
+        public bool PlayerControlled { get; set; }
         /**public string Lastname { get; protected set; }
         public string Firstname { get; protected set; }*/
 

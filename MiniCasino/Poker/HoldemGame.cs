@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Threading;
 
 namespace MiniCasino.Poker
 {
@@ -78,6 +79,7 @@ namespace MiniCasino.Poker
 
             
             End();
+            Thread.Sleep(1000);
         }
 
         public override void StartGame()
@@ -247,15 +249,9 @@ namespace MiniCasino.Poker
             players = ReformPlayerList(players, startingPoint);
             bool betsDone = false;
 
-            /*foreach (var p in players)
-            {
-                p.SetAvailableCards(tableCards);
-            }*/
-
             if (bs != BetStage.INITIAL)
             {
                 raiseSize = 0;
-                
             }
 
             while (betsDone == false)
