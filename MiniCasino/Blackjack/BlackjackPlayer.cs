@@ -48,5 +48,15 @@ namespace MiniCasino.Blackjack
             }
 
         }
+
+        public void PrintCards()
+        {
+            cards.ForEach(a => { Console.WriteLine(a.ToString()); });
+        }
+
+        bool CardPlayer.PlayerControlled()
+        {
+            return base.PlayerControlled;
+        }
     }
 }

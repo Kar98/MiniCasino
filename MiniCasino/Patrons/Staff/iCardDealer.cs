@@ -14,6 +14,7 @@ namespace MiniCasino.Patrons.Staff
         void SetCardList(List<Card> cards);
         List<Card> ReturnCards();
         bool DestroyCards();
+        void PrintCards();
 
 
     }

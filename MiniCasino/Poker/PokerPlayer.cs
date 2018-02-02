@@ -112,7 +112,17 @@ namespace MiniCasino.Poker
 
         public void SetCardList(List<Card> cards)
         {
-            this.pocketCards = cards;
+            pocketCards = cards;
+        }
+
+        public void PrintCards()
+        {
+            pocketCards.ForEach(a => { Console.WriteLine(a.ToString()); });
+        }
+
+        public bool PlayerControlled()
+        {
+            return base.PlayerControlled;
         }
     }
 }

@@ -7,6 +7,7 @@ using System;
 using MiniCasino.Blackjack;
 using System.Data.SqlClient;
 using MiniCasino.Poker;
+using System.IO;
 
 /*
  * TODO: Have a DB where the rooms/people can be stored so no hard coding needed.
@@ -22,32 +23,24 @@ namespace MiniCasino
         static int gameID = 0;
         static List<CardGame> games = new List<CardGame>();
         static List<Room> rooms = new List<Room>();
-        static Queue<int> queue = new Queue<int>();
-        static Stack<int> stack = new Stack<int>();
-
+        static List<Task> tasks = new List<Task>();
 
         public static void Main(string[] args)
         {
             GenerateRooms();
             r = new Random();
-            var tasks = new List<Task>();
+            
 
             for (int i = 0; i < 1; i++)
             {
                 //NewHoldenGame();
-                //NewBlackjackGame();
+                NewBlackjackGame();
+
             }
 
             games.ForEach(a => {
                 tasks.Add(Task.Factory.StartNew(() => { a.StartGame(); }));
                     });
-
-            string s;
-            Console.WriteLine("Pre add");
-            while ((s = Console.ReadLine()) != null)
-            {
-                Console.WriteLine($"echo: {s}");
-            }
 
             HandleCommands();
             
@@ -83,15 +76,22 @@ namespace MiniCasino
                     case "poker":
                         tasks.Add(Task.Factory.StartNew(() => { NewHoldenGame().StartGame(); }));
                         break;
-                    case "s":
+                    case "stop":
                         stop = true;
                         tasks.Clear();
                         break;
                     case "self":
                         tasks.Add(AddSelfToGameAsync(0));
+                        PlayerMode(games[0]);
                         break;
                     case "games":
                         PrintGames(rooms[0]);
+                        break;
+                    case "menu":
+                        Console.WriteLine("Main menu");
+                        break;
+                    case "clean":
+                        CleanupGames();
                         break;
                     default:
                         break;
@@ -101,21 +101,56 @@ namespace MiniCasino
             Task.WaitAll(tasks.ToArray());
         }
 
+        private static void PlayerMode(CardGame game)
+        {
+            bool run = true;
+            while (run)
+            {
+                var input = Console.ReadLine();
+                game.AddPlayerCommand(input);
+                if (input == "exit")
+                {
+                    run = false;
+                    Console.WriteLine("Run is now false for PlayerMode");
+                }
+                if(input == "menu")
+                {
+                    Console.WriteLine("Player mode menu");
+                }
+                    
+            }
+
+        }
+
+        public static void CleanupGames()
+        {
+            foreach(var t in tasks)
+            {
+                if (t.Status == TaskStatus.RanToCompletion)
+                {
+                    t.Dispose();
+                }
+            }
+        }
+
         public static void PrintGames(Room r)
         {
             Console.WriteLine($"Number of games running: {r.GetBlackjackGames().Count}");
             r.GetBlackjackGames().ForEach(a => { Console.WriteLine(a.ID); });
         }
 
-
         private static async Task AddPlayerToGameAsync(int Gameindex)
         {
-            await Task.Factory.StartNew(() => games[Gameindex].AddDefaultPlayer());
+            var game = GetRunningGame();
+            if (game != null)
+                await Task.Factory.StartNew(() => games[Gameindex].AddDefaultPlayer());
         }
 
         private static async Task AddSelfToGameAsync(int gameIndex)
         {
-            await Task.Factory.StartNew(() => games[gameIndex].AddSelf(true));
+            var game = GetRunningGame();
+            if(game != null )
+                await Task.Factory.StartNew(() => games[gameIndex].AddSelf(true));
         }
 
         private static void CheckForValidGames()
@@ -131,6 +166,16 @@ namespace MiniCasino
                     }
                 }
             Console.WriteLine($"Total games: {games.Count}");
+        }
+
+        private static CardGame GetRunningGame()
+        {
+            foreach(var g in games)
+            {
+                if (g.IsRunning())
+                    return g;
+            }
+            return null;
         }
 
         private static string LogString(int length)

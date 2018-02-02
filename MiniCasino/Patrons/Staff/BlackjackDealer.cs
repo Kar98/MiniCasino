@@ -46,5 +46,13 @@ namespace MiniCasino.Patrons.Staff
             }
 
         }
+
+        public void PrintCards()
+        {
+            Console.WriteLine("Dealer cards: ");
+            cards.ForEach(a => { Console.Write(a.ToString()); });
+            Console.WriteLine("");
+            Console.WriteLine("Card value: " + CardsValue);
+        }
     }
 }

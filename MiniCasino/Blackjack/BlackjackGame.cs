@@ -8,16 +8,16 @@ using System.Collections.Generic;
 using MiniCasino.Patrons.Staff;
 using System.Collections.Concurrent;
 using MiniCasino.Logging;
+using System.IO;
+using System.Diagnostics;
+using System.Threading.Tasks;
 
 namespace MiniCasino.Blackjack
 {
     public class BlackjackGame : CardGame
     {
-        private int hands = 0;
-        private Dictionary<BlackjackPlayer, double> betPool = new Dictionary<BlackjackPlayer, double>();
-        public string logID;
-        public int ID;
-        new BlackjackDealer dealer;
+        private Dictionary<BlackjackPlayer, double> betPool = new Dictionary<BlackjackPlayer, double>();   
+        BlackjackDealer dealer;
 
         BlackjackPlayer player1 = DefaultPatron();
         BlackjackPlayer player2 = DefaultPatron();
@@ -32,6 +32,7 @@ namespace MiniCasino.Blackjack
             Console.WriteLine(logID);
             ID = table.TableID();
             pendingPlayers = new BlockingCollection<CardPlayer>();
+            commands = new ConcurrentQueue<string>();
 
             Logs.RegisterNewTrace(logID, null, "bj");
 
@@ -62,7 +63,7 @@ namespace MiniCasino.Blackjack
                 Logs.LogTrace("count of players: " + playerGroup.Count, logID);
                 Hands++;
 
-                Logs.LogTrace($"*Start {hands}*", logID);
+                Logs.LogTrace($"*Start {Hands}*", logID);
                 while(pendingPlayers.Count > 0)
                 {
                     playerGroup.Add(pendingPlayers.Take());
@@ -87,8 +88,14 @@ namespace MiniCasino.Blackjack
                 foreach (BlackjackPlayer bp in playerGroup)
                 {
                     Logs.LogTrace("Player: " + bp.CardsValue, logID);
+                    if (bp.PlayerControlled)
+                    {
+                        dealer.PrintCards();
+                    }
+                        
                     if (DecideOutcome(bp))
                     {
+                       
                         if(bp.PlayerControlled == true)
                         {
                             Console.WriteLine("You win!");
@@ -116,19 +123,21 @@ namespace MiniCasino.Blackjack
                 if (playerGroup.Count < 1)
                     run = false;
 
-                Logs.LogTrace($"*End {hands}*", logID);
+                Logs.LogTrace($"*End {Hands}*", logID);
                 Thread.Sleep(1500);
             }
             Console.WriteLine($"Game has ended {logID}");
         }
 
-        private void Hit(CardPlayer bp)
+        private void Hit(BlackjackPlayer bp)
         {
             bp.AddCards((Card)st.Dequeue());
+            bp.CardsValue = CalcCards(bp.ReturnCards());
         }
-        private void Hit(iCardDealer bp)
+        private void Hit(BlackjackDealer bp)
         {
            bp.AddCards((Card)st.Dequeue());
+           bp.CardsValue = CalcCards(bp.ReturnCards());
         }
         private void Hit(List<Card> cards)
         {
@@ -149,12 +158,25 @@ namespace MiniCasino.Blackjack
         private void CheckForValidPlayers()
         {
             var tempGroup = new List<CardPlayer>();
+            commands.TryDequeue(out string res);
 
             foreach (var player in playerGroup)
             {
                 Console.Write(((Person)player).Firstname);
+                
                 if (player.GetMoney() >= minBet)
-                    tempGroup.Add(player);
+                    if (!player.PlayerControlled())
+                    {
+                        tempGroup.Add(player);
+                    }
+                    else if(player.PlayerControlled() && res != "exit")
+                    {
+                        tempGroup.Add(player);
+                    }
+                    else
+                    {
+                        Logs.LogTrace($"{player.GetLastname()} {player.GetFirstname()} has been removed from {logID}", logID);
+                    }
                 else
                     Logs.LogTrace($"{player.GetLastname()} {player.GetFirstname()} has been removed from {logID}", logID);
             }
@@ -167,15 +189,17 @@ namespace MiniCasino.Blackjack
             {
                 player.AddCards((Card)st.Dequeue());
                 player.AddCards((Card)st.Dequeue());
+                player.CardsValue = CalcCards(player.ReturnCards());
             }
             dealer.AddCards((Card)st.Dequeue());
             dealer.AddCards((Card)st.Dequeue());
+            dealer.CardsValue = CalcCards(dealer.ReturnCards());
         }
 
         protected override void End()
         {
             betPool.Clear();
-            Console.WriteLine("Hand finished");
+            Logs.LogTrace("Hand finished", logID);
         }
 
         public override void AddDefaultPlayer()
@@ -228,17 +252,23 @@ namespace MiniCasino.Blackjack
         private void HumanPlay(BlackjackPlayer player)
         {
             bool awaitResp = true;
-            Console.Clear();
             Console.WriteLine("h to hit | s to stay | split to split | q to quit");
+
+            PrintCards(player);
+            
+
             while (awaitResp)
             {
-                PrintCards(player);
+                Console.WriteLine("Card value : " + player.CardsValue);
                 if (player.CardsValue > 21)
                 {
                     awaitResp = false;
+                    Console.WriteLine("Card value : " + player.CardsValue);
                     Console.WriteLine("Bust!");
+                    break;
                 }
-                var action = Console.ReadLine();
+
+                var action = WaitForCommand();
                 switch (action)
                 {
                     case "h":
@@ -249,14 +279,18 @@ namespace MiniCasino.Blackjack
                         break;
                     case "split":
                         break;
-                    case "q":
+                    case "exit":
+                        awaitResp = false;
+                        commands.Enqueue("exit");
+                        break;
+                    case "money":
+                        Console.WriteLine(player.Money);
                         break;
                     default:
                         Console.WriteLine("Enter a value");
                         break;
                 }
             }
-            
         }
 
         private int BasicPlayerAI(List<Card> cards)
@@ -388,6 +422,5 @@ namespace MiniCasino.Blackjack
             return false;
                 
         }
-
     }
 }

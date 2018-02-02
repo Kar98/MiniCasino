@@ -7,15 +7,16 @@ using System;
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Threading;
 
 namespace MiniCasino
 {
     public abstract class CardGame
     {
-
         protected Tables table;
         public double minBet;
         protected iCardDealer dealer;
@@ -24,6 +25,9 @@ namespace MiniCasino
         protected Queue st;
         protected bool run;
         public int Hands { get; set; }
+        public string logID;
+        public int ID;
+        protected ConcurrentQueue<string> commands;
 
         protected virtual void Deal()
         {
@@ -45,6 +49,36 @@ namespace MiniCasino
         public virtual void AddSelf(bool playerControlled)
         {
             throw new NotImplementedException();
+        }
+
+        public void AddPlayerCommand(string cmd)
+        {
+            commands.Enqueue(cmd);
+        }
+
+        protected string GetCommand()
+        {
+            commands.TryDequeue(out string res);
+            return res;
+        }
+
+        protected string WaitForCommand()
+        {
+            bool cmdFound = false;
+            while (!cmdFound)
+            {
+                var s = GetCommand();
+                if (string.IsNullOrEmpty(s))
+                {
+                    Thread.Sleep(1000);
+                }
+                else
+                {
+                    cmdFound = true;
+                    return s;
+                }
+            }
+            return "";
         }
 
         protected List<Person> CastToPerson(List<CardPlayer> list)
@@ -97,6 +131,5 @@ namespace MiniCasino
         {
             return run;
         }
-
     }
 }

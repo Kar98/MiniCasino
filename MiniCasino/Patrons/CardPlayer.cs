@@ -9,11 +9,13 @@ namespace MiniCasino.Patrons
 {
     public interface CardPlayer : iPerson
     {
+        bool PlayerControlled();
         void AddCards(Card c);
         void SetCardList(List<Card> cards);
         List<Card> ReturnCards();
         bool DestroyCards();
         double GetMoney();
+        void PrintCards();
 
     }
 }
