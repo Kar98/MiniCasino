@@ -28,6 +28,9 @@ namespace MiniCasino
         public string logID;
         public int ID;
         protected ConcurrentQueue<string> commands;
+        public CardGameType Type { get; set; }
+
+        public enum CardGameType { POKER, BJ };
 
         protected virtual void Deal()
         {
@@ -46,9 +49,9 @@ namespace MiniCasino
         public virtual void AddDefaultPlayer()
         { throw new NotImplementedException(); }
 
-        public virtual void AddSelf(bool playerControlled)
+        public virtual void AddSelf(Patron p)
         {
-            throw new NotImplementedException();
+            pendingPlayers.Add((CardPlayer)p);
         }
 
         public void AddPlayerCommand(string cmd)

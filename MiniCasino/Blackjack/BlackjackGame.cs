@@ -33,6 +33,7 @@ namespace MiniCasino.Blackjack
             ID = table.TableID();
             pendingPlayers = new BlockingCollection<CardPlayer>();
             commands = new ConcurrentQueue<string>();
+            Type = CardGameType.BJ;
 
             Logs.RegisterNewTrace(logID, null, "bj");
 
@@ -207,9 +208,9 @@ namespace MiniCasino.Blackjack
             pendingPlayers.Add(DefaultPatron());
         }
 
-        public override void AddSelf(bool playerControlled)
+        public override void AddSelf(Patron p)
         {
-            pendingPlayers.Add(DefaultPatron(playerControlled));
+            pendingPlayers.Add(new BlackjackPlayer(p.GetAddressAsString(),p.Birthday,p.Sex,true));
         }
 
         private void PlayerAI(BlackjackPlayer bp)

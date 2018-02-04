@@ -8,6 +8,7 @@ using MiniCasino.Blackjack;
 using System.Data.SqlClient;
 using MiniCasino.Poker;
 using System.IO;
+using MiniCasino.Patrons;
 
 /*
  * TODO: Have a DB where the rooms/people can be stored so no hard coding needed.
@@ -24,18 +25,20 @@ namespace MiniCasino
         static List<CardGame> games = new List<CardGame>();
         static List<Room> rooms = new List<Room>();
         static List<Task> tasks = new List<Task>();
+        static Patron self = new Patron("10 Cambridge St, Box Hill", new DateTime(1983, 10, 10), 'M');
 
         public static void Main(string[] args)
         {
             GenerateRooms();
             r = new Random();
             
+            
+
 
             for (int i = 0; i < 1; i++)
             {
                 //NewHoldenGame();
                 NewBlackjackGame();
-
             }
 
             games.ForEach(a => {
@@ -64,8 +67,11 @@ namespace MiniCasino
 
                 switch (stuff)
                 {
-                    case "a":
-                         tasks.Add(AddPlayerToGameAsync(0)); 
+                    case "add bj":
+                         tasks.Add(AddPlayerToBlackjack(0)); 
+                        break;
+                    case "add poker":
+                        tasks.Add(AddPlayerToPoker(0));
                         break;
                     case "check":
                         CheckForValidGames();
@@ -80,8 +86,12 @@ namespace MiniCasino
                         stop = true;
                         tasks.Clear();
                         break;
-                    case "self":
-                        tasks.Add(AddSelfToGameAsync(0));
+                    case "self bj":
+                        tasks.Add(AddSelfToBlackjack());
+                        PlayerMode(games[0]);
+                        break;
+                    case "self poker":
+                        tasks.Add(AddSelfToPoker());
                         PlayerMode(games[0]);
                         break;
                     case "games":
@@ -117,9 +127,7 @@ namespace MiniCasino
                 {
                     Console.WriteLine("Player mode menu");
                 }
-                    
             }
-
         }
 
         public static void CleanupGames()
@@ -139,18 +147,30 @@ namespace MiniCasino
             r.GetBlackjackGames().ForEach(a => { Console.WriteLine(a.ID); });
         }
 
-        private static async Task AddPlayerToGameAsync(int Gameindex)
+        private static async Task AddPlayerToBlackjack(int Gameindex)
         {
-            var game = GetRunningGame();
-            if (game != null)
-                await Task.Factory.StartNew(() => games[Gameindex].AddDefaultPlayer());
+            var game = GetBlackjackGames();
+            if (game.Count != 0)
+                await Task.Factory.StartNew(() => game[0].AddDefaultPlayer());
         }
 
-        private static async Task AddSelfToGameAsync(int gameIndex)
+        private static async Task AddPlayerToPoker(int Gameindex)
         {
-            var game = GetRunningGame();
-            if(game != null )
-                await Task.Factory.StartNew(() => games[gameIndex].AddSelf(true));
+            var game = GetPokerGames();
+            if (game.Count != 0)
+                await Task.Factory.StartNew(() => game[0].AddDefaultPlayer());
+        }
+
+        private async static Task AddSelfToPoker()
+        {
+            await Task.Factory.StartNew(() => games.Add(NewHoldenGame(self)));
+        }
+
+        private async static Task AddSelfToBlackjack()
+        {
+            var game = GetBlackjackGames();
+            if (game != null)
+                await Task.Factory.StartNew(() => game[0].AddSelf(self));
         }
 
         private static void CheckForValidGames()
@@ -168,14 +188,37 @@ namespace MiniCasino
             Console.WriteLine($"Total games: {games.Count}");
         }
 
-        private static CardGame GetRunningGame()
+        private static List<CardGame> GetRunningGames()
         {
-            foreach(var g in games)
+            var retList = new List<CardGame>();
+            foreach (var g in games)
             {
                 if (g.IsRunning())
-                    return g;
+                    retList.Add(g);
             }
-            return null;
+            return retList;
+        }
+
+        private static List<CardGame> GetPokerGames()
+        {
+            var retList = new List<CardGame>();
+            foreach(var g in games)
+            {
+                if (g.Type == CardGame.CardGameType.POKER)
+                    retList.Add(g);
+            }
+            return retList;
+        }
+
+        private static List<CardGame> GetBlackjackGames()
+        {
+            var retList = new List<CardGame>();
+            foreach (var g in games)
+            {
+                if (g.Type == CardGame.CardGameType.BJ)
+                    retList.Add(g);
+            }
+            return retList;
         }
 
         private static string LogString(int length)
@@ -191,18 +234,20 @@ namespace MiniCasino
             return new String(stringChars);
         }
 
-        public static BlackjackGame NewBlackjackGame()
+        public static BlackjackGame NewBlackjackGame(Patron self = null)
         {
             gameID++;
             var newgame = rooms[0].AddBlackJackTable(new BlackjackDealer("123 Fake St", new DateTime(1980, 2, 3), 'M'), 10);
+            if (self != null)
+                newgame.AddSelf(self);
             games.Add(newgame);
             return newgame;
         }
 
-        public static HoldemGame NewHoldenGame()
+        public static HoldemGame NewHoldenGame(Patron self = null)
         {
             gameID++;
-            var newgame = rooms[0].AddHoldemTable(new BlackjackDealer("123 Fake St", new DateTime(1980, 2, 3), 'M'), 10);
+            var newgame = rooms[0].AddHoldemTable(10, self);
             games.Add(newgame);
             return newgame;
         }

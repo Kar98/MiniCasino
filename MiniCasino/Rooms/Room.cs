@@ -1,4 +1,5 @@
 ﻿using MiniCasino.Blackjack;
+using MiniCasino.Patrons;
 using MiniCasino.Patrons.Staff;
 using MiniCasino.Poker;
 using System;
@@ -36,9 +37,9 @@ namespace MiniCasino.Rooms
             return bjgames;
         }
 
-        public HoldemGame AddHoldemTable(iCardDealer dealer, int minbet)
+        public HoldemGame AddHoldemTable(int minbet, Patron p = null)
         {
-            pokergames.Add(new HoldemGame(new Tables(nextID), minbet));
+            pokergames.Add(new HoldemGame(new Tables(nextID), minbet, p));
             nextID++;
             return pokergames.Last();
         }

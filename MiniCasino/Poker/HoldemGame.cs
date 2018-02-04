@@ -31,7 +31,7 @@ namespace MiniCasino.Poker
 
         enum BetStage { INITIAL, FLOP, TURN, RIVER };
 
-        public HoldemGame(Tables AssignedTable, double buyin = 2.0)
+        public HoldemGame(Tables AssignedTable, double buyin = 2.0, Patron p = null)
         {
             this.table = AssignedTable;
             this.dealer = null;
@@ -43,7 +43,14 @@ namespace MiniCasino.Poker
             st = new Queue(new Deck(4).ReturnDeck());
             playerGroup = new List<CardPlayer>();
             logID = Guid.NewGuid().ToString();
-            for (int i = 0; i < this.table.PlayerLimit(); i++)
+            Type = CardGameType.POKER;
+            int totalPlayersToAdd = this.table.PlayerLimit();
+            if(p != null)
+            {
+                totalPlayersToAdd--;
+                playerGroup.Add(new PokerPlayer((CardPlayer)p));
+            }
+            for (int i = 0; i < totalPlayersToAdd; i++)
             {
                 var newPlayer = new PokerPlayer("123 fake st", new DateTime(1980, 1, 1), 'M');
                 playerGroup.Add(newPlayer);
