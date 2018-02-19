@@ -45,7 +45,10 @@ namespace MiniCasino.PlayingCards
 
         public override string ToString()
         {
-            return $"{Suit.ToString()[0]}{Number} ";
+            if(Number != '0')
+                return $"{Suit.ToString()[0]}{Number} ";
+            else
+                return $"{Suit.ToString()[0]}10 ";
         }
 
 

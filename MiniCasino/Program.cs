@@ -13,7 +13,8 @@ using MiniCasino.Patrons;
 /*
  * TODO: Have a DB where the rooms/people can be stored so no hard coding needed.
  * Have SQL scripts to auto setup the DB if needed.
- * TODO: Add the ability to play blackjack from the console.
+ * Setup local DB to store values in
+ *
  */
 
 namespace MiniCasino
@@ -25,14 +26,14 @@ namespace MiniCasino
         static List<CardGame> games = new List<CardGame>();
         static List<Room> rooms = new List<Room>();
         static List<Task> tasks = new List<Task>();
-        static Patron self = new Patron("10 Cambridge St, Box Hill", new DateTime(1983, 10, 10), 'M');
+        static Patron self = new Patron(new DateTime(1991, 4, 2),'M',true,"Rory","Crickmore");
 
         public static void Main(string[] args)
         {
             GenerateRooms();
             r = new Random();
-            
-            
+
+            self.PlayerControlled = true;
 
 
             for (int i = 0; i < 1; i++)
@@ -88,11 +89,19 @@ namespace MiniCasino
                         break;
                     case "self bj":
                         tasks.Add(AddSelfToBlackjack());
-                        PlayerMode(games[0]);
+                        PlayerMode(games.FindLast(a => a.Type == CardGame.CardGameType.BJ));
                         break;
                     case "self poker":
                         tasks.Add(AddSelfToPoker());
-                        PlayerMode(games[0]);
+                        /*foreach(var g in games)
+                        {
+                            if(g.Type == CardGame.CardGameType.POKER)
+                            {
+                                PlayerMode(games.FindLast(a => a.Type == CardGame.CardGameType.POKER));
+                                break;
+                            }
+                        }*/
+                        PlayerMode(games.FindLast(a => a.Type == CardGame.CardGameType.POKER));
                         break;
                     case "games":
                         PrintGames(rooms[0]);
@@ -143,8 +152,13 @@ namespace MiniCasino
 
         public static void PrintGames(Room r)
         {
-            Console.WriteLine($"Number of games running: {r.GetBlackjackGames().Count}");
-            r.GetBlackjackGames().ForEach(a => { Console.WriteLine(a.ID); });
+            List<CardGame> runningGames = new List<CardGame>();
+            foreach(var g in games)
+            {
+                if (g.IsRunning())
+                    runningGames.Add(g);
+            }
+            Console.WriteLine($"Number of games running: {runningGames.Count}");
         }
 
         private static async Task AddPlayerToBlackjack(int Gameindex)
@@ -163,11 +177,14 @@ namespace MiniCasino
 
         private async static Task AddSelfToPoker()
         {
-            await Task.Factory.StartNew(() => games.Add(NewHoldenGame(self)));
+            Console.Clear();
+            var pokerGame = NewHoldenGame(self);
+            await Task.Factory.StartNew(() => pokerGame.StartGame());
         }
 
         private async static Task AddSelfToBlackjack()
         {
+            Console.Clear();
             var game = GetBlackjackGames();
             if (game != null)
                 await Task.Factory.StartNew(() => game[0].AddSelf(self));

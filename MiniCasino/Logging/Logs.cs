@@ -106,7 +106,7 @@ namespace MiniCasino.Logging
 
             public Trace(string traceID, string logroot, string logPrefix, bool bfileTime, bool bTimeStamp)
             {
-                bool flag = false;
+                //bool flag = false;
                 if (string.IsNullOrWhiteSpace(traceID))
                 {
                     throw new ArgumentException("Failed to initialize new trace instance, trace ID not provided");
@@ -144,7 +144,7 @@ namespace MiniCasino.Logging
                     Console.WriteLine($"Increment:{logIncrement}");
                 }
 
-                flag = true;
+                //flag = true;
                 UseTimeStamp = bTimeStamp;
             }
 

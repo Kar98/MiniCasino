@@ -12,10 +12,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Threading;
+using MiniCasino.Logging;
 
 namespace MiniCasino
 {
-    public abstract class CardGame
+    public abstract class CardGame : InternalLog
     {
         protected Tables table;
         public double minBet;
@@ -29,21 +30,26 @@ namespace MiniCasino
         public int ID;
         protected ConcurrentQueue<string> commands;
         public CardGameType Type { get; set; }
-
         public enum CardGameType { POKER, BJ };
-
-        protected virtual void Deal()
-        {
-            foreach (CardPlayer player in playerGroup)
-            {
-                player.AddCards((Card)st.Dequeue());
-            }
-            dealer.AddCards((Card)st.Dequeue());
-        }
 
         public virtual void StartGame()
         {
             throw new NotImplementedException();
+        }
+
+        protected virtual void End()
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Stop()
+        {
+            run = false;
+        }
+
+        public bool IsRunning()
+        {
+            return run;
         }
 
         public virtual void AddDefaultPlayer()
@@ -52,6 +58,15 @@ namespace MiniCasino
         public virtual void AddSelf(Patron p)
         {
             pendingPlayers.Add((CardPlayer)p);
+        }
+
+        protected virtual void Deal()
+        {
+            foreach (CardPlayer player in playerGroup)
+            {
+                player.AddCards((Card)st.Dequeue());
+            }
+            dealer.AddCards((Card)st.Dequeue());
         }
 
         public void AddPlayerCommand(string cmd)
@@ -120,19 +135,5 @@ namespace MiniCasino
             }
         }
 
-        protected virtual void End()
-        {
-            throw new NotImplementedException();
-        }
-
-        public void Stop()
-        {
-            run = false;
-        }
-
-        public bool IsRunning()
-        {
-            return run;
-        }
     }
 }

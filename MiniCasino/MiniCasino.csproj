@@ -47,6 +47,7 @@
     <Compile Include="Blackjack\BlackjackGame.cs" />
     <Compile Include="CardGame.cs" />
     <Compile Include="Db.cs" />
+    <Compile Include="Logging\InternalLog.cs" />
     <Compile Include="Logging\Logs.cs" />
     <Compile Include="Patrons\iPerson.cs" />
     <Compile Include="Patrons\Patron.cs" />
@@ -56,6 +57,7 @@
     <Compile Include="Patrons\Staff\iCardDealer.cs" />
     <Compile Include="PlayingCards\Card.cs" />
     <Compile Include="PlayingCards\Deck.cs" />
+    <Compile Include="Poker\AIPotentialCardValues.cs" />
     <Compile Include="Poker\HoldemGame.cs" />
     <Compile Include="Poker\PokerEvaluator.cs" />
     <Compile Include="Poker\PokerPlayer.cs" />

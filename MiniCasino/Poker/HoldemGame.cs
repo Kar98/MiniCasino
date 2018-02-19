@@ -1,14 +1,15 @@
 ﻿using MiniCasino.Patrons;
-using MiniCasino.Patrons.Staff;
 using MiniCasino.PlayingCards;
 using MiniCasino.Rooms;
+using MiniCasino.Logging;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using System.Threading;
+using System.Collections.Concurrent;
+
 
 namespace MiniCasino.Poker
 {
@@ -21,8 +22,6 @@ namespace MiniCasino.Poker
         Random r;
         long bb; //big blind
         long sb; //small blind
-        public string logID;
-        public int ID;
         
         private long pot;
         private long raiseSize; //Amount that is needed for a player to match the bets placed.
@@ -42,21 +41,37 @@ namespace MiniCasino.Poker
             Hands = 1;
             st = new Queue(new Deck(4).ReturnDeck());
             playerGroup = new List<CardPlayer>();
+            this.pendingPlayers = new BlockingCollection<CardPlayer>();
             logID = Guid.NewGuid().ToString();
+            Logs.RegisterNewTrace(logID, null, "poker");
             Type = CardGameType.POKER;
             int totalPlayersToAdd = this.table.PlayerLimit();
-            if(p != null)
+            commands = new ConcurrentQueue<string>();
+
+            Logs.LogTrace("log GUID : " + logID, logID);
+            Logs.LogTrace($"T: {Thread.CurrentThread.ManagedThreadId} New blackjack game started", logID);
+
+            int forInt = 0;
+
+            if (p != null)
             {
-                totalPlayersToAdd--;
-                playerGroup.Add(new PokerPlayer((CardPlayer)p));
+                var newPlayer = new PokerPlayer(p);
+                playerGroup.Add(newPlayer);
+                positions.Add(0, newPlayer);
+                betPool.Add(newPlayer, 0);
+                outputToConsole = true;
+                forInt++;
             }
-            for (int i = 0; i < totalPlayersToAdd; i++)
+                
+            for (int i = forInt; i < totalPlayersToAdd; i++)
             {
                 var newPlayer = new PokerPlayer("123 fake st", new DateTime(1980, 1, 1), 'M');
                 playerGroup.Add(newPlayer);
                 positions.Add(i, newPlayer);
                 betPool.Add(newPlayer,0);
+
             }
+
             button = 0;
         }
 
@@ -65,8 +80,9 @@ namespace MiniCasino.Poker
         {
             /* TODO: POKER GAME
              * Pot logic - sides pots
-             * Player AI.
-             * Enable actual play from console
+             * Basic Poker AI. Need to evaluate potential cards for upcoming hands and to factor in the AIs position on the table during bets
+             * Low value cards need to be folded and medium level need to be call. High value will raise. 
+             * In the future potentially have some players considered aggressive or passive play.
              * 
              */
             IncrementBlindCheck();
@@ -95,6 +111,14 @@ namespace MiniCasino.Poker
             
             Console.WriteLine($"Game started - {ID}");
 
+            while (pendingPlayers.Count > 0)
+            {
+                var newPlayer = new PokerPlayer(pendingPlayers.Take());
+                playerGroup.Add(newPlayer);
+                positions.Add(positions.Count-1, newPlayer);
+                betPool.Add(newPlayer, 0);
+            }
+
             while (run)
             {
                 Hands++;
@@ -114,6 +138,9 @@ namespace MiniCasino.Poker
                     player.BetsPlaced = false;
                     player.AddCards((Card)st.Dequeue());
                     player.AddCards((Card)st.Dequeue());
+
+                    if (player.PlayerControlled())
+                        player.PrintCards();
                 }
             }
         }
@@ -127,23 +154,29 @@ namespace MiniCasino.Poker
                 (Card)st.Dequeue(),
                 (Card)st.Dequeue()
             };
+            if (outputToConsole)
+                PrintTableCards();
         }
 
         private void Turn()
         {
             ResetPlayerContext();
             tableCards.Add((Card)st.Dequeue());
+            if (outputToConsole)
+                PrintTableCards();
         }
 
         private void River()
         {
             ResetPlayerContext();
             tableCards.Add((Card)st.Dequeue());
+            if (outputToConsole)
+                PrintTableCards();
         }
 
         private void Showdown()
         {
-            PokerEvaluator pe = new PokerEvaluator(availablePlayers, tableCards);
+            PokerEvaluator pe = new PokerEvaluator(availablePlayers, tableCards, outputToConsole);
             var winner = pe.Winner();
             
             // if no winner, then run side pot, else give all to winner.
@@ -153,9 +186,9 @@ namespace MiniCasino.Poker
             }
             else
             {
-                Console.WriteLine("Multi win");
+                LogLine("Multi win");
                 var splitPot = this.pot / winner.Count;
-                Console.WriteLine("Split pot = " + splitPot);
+                LogLine("Split pot = " + splitPot);
                 foreach (var w in winner)
                 {
                     w.Chips += splitPot;
@@ -165,6 +198,11 @@ namespace MiniCasino.Poker
 
         private void Blinds()
         {
+            if(this.Hands % 20 == 0)
+            {
+                bb *= 2;
+                sb = bb / 2;
+            }
             AddToPot(positions[button+1], sb);
             positions[button + 1].SetBlinds(sb);
             AddToPot(positions[button+2], bb);
@@ -191,11 +229,13 @@ namespace MiniCasino.Poker
 
         private PlayerAction Raise(PokerPlayer player, long chips)
         {
-            long totalChips;
+            long totalChips = 0;
+
             if (player.Chips < chips)
             {
                 raiseSize += player.Chips;
                 AddToPot(player, raiseSize);
+                LogLine($"Not enough chips to raise {chips}, raising up to {raiseSize} instead");
             }
             else
             {
@@ -203,6 +243,8 @@ namespace MiniCasino.Poker
                 raiseSize += chips;
                 AddToPot(player, totalChips);
             }
+            
+            LogLine($"Raised to {raiseSize}");
             return player.Raise(raiseSize);
         }
 
@@ -213,17 +255,20 @@ namespace MiniCasino.Poker
             {
                 totalChips = player.Chips;
                 AddToPot(player, totalChips);
+                LogLine($"Not enough money, calling to {player.Chips} instead");
             }
             else
             {
                 totalChips = raiseSize - player.BetValue;
                 AddToPot(player, totalChips);
             }
+            LogLine(player.ToString() + " called");
             return player.Call(totalChips);
         }
 
         private PlayerAction Fold(PokerPlayer player)
         {
+            LogLine(player.ToString() + " folded");
             return player.Fold();
         }
 
@@ -248,18 +293,70 @@ namespace MiniCasino.Poker
             }
         }
 
+        private PlayerAction HumanPlay(PokerPlayer player, BetStage bs)
+        {
+            bool awaitResp = true;
+            Console.WriteLine($"Current betting stage : {bs.ToString()}");
+            Console.WriteLine("Enter 'raise #', 'call', 'hand' or 'fold' for player actions");
+            Console.WriteLine("Enter 'hand' to view current hand");
+
+            while (awaitResp)
+            {
+                var action = WaitForCommand();
+                action = action.ToLower();
+
+                var splitAct = action.Split(' ');
+
+                if (splitAct.Length == 1)
+                {
+                    switch (splitAct[0])
+                    {
+                        case "call":
+                            var a = Call(player);
+                            if(a != PlayerAction.NONE)
+                                return Call(player);
+                            break;
+                        case "money":
+                            LogLine("Chips: " + player.Chips);
+                            break;
+                        case "fold":
+                            return Fold(player);
+                        case "hand":
+                            PrintTableCards();
+                            player.PrintCards();
+                            Console.WriteLine();
+                            break;
+                    }
+                }
+                else if (splitAct.Length > 1 && splitAct[0] == "raise")
+                {
+                    if (int.TryParse(splitAct[1], out int res))
+                    {
+                        var a = Raise(player, res);
+                        if(a != PlayerAction.NONE)
+                            return Raise(player, res);
+                    }
+                }
+                else
+                {
+                    LogLine("Enter a valid value");
+                }
+            }
+
+            throw new Exception("No player action performed!");
+        }
+
         private void BettingRound(BetStage bs)
         {
             var players = ValidPlayers();
-            var startingPoint = GetPosition();
+            var startingPoint = GetStartingPosition();
             var raisePoint = startingPoint; // This is the spot where the person doing the raising is located. 
             players = ReformPlayerList(players, startingPoint);
             bool betsDone = false;
 
             if (bs != BetStage.INITIAL)
-            {
                 raiseSize = 0;
-            }
+            
 
             while (betsDone == false)
             {
@@ -267,7 +364,12 @@ namespace MiniCasino.Poker
                 {
                     if (players[i].BetsPlaced == false)
                     {
-                        var action = PlayerAI(players[i], bs);
+                        PlayerAction action;
+                        if (players[i].PlayerControlled())
+                            action = HumanPlay(players[i], bs);
+                        else
+                            action = PlayerAI(players[i], bs);
+
                         if (action == PlayerAction.RAISE)
                         {
                             raisePoint = i;
@@ -298,36 +400,17 @@ namespace MiniCasino.Poker
         private List<PokerPlayer> ReformPlayerList(List<PokerPlayer> players, int startingPoint)
         {
             //reform the list into a series of players from a particular point.
-            //var playerArr = players.ToArray();
-            var tempList = new PokerPlayer[players.Count];
+            var tempList = new List<PokerPlayer>();
             var tempListi = 0;
             for(int i = startingPoint;i < players.Count; i++, tempListi++)
             {
                 if(players[i].Active)
-                    tempList[tempListi] = players[i];
+                    tempList.Add(players[i]);
             }
             for(int i = 0;i < startingPoint; i++, tempListi++)
             {
                 if (players[i].Active)
-                    tempList[tempListi] = players[i];
-            }
-            return tempList.ToList();
-        }
-
-        private List<PokerPlayer> ReformPlayerListExcludeRaiser(List<PokerPlayer> players, int startingPoint)
-        {
-            //reform the list into a series of 
-            var playerArr = players.ToArray();
-            var tempList = new List<PokerPlayer>();
-            for (int i = startingPoint + 1; i < playerArr.Length; i++)
-            {
-                if (positions[i].Active)
-                    tempList.Add(positions[i]);
-            }
-            for (int i = 0; i < startingPoint; i++)
-            {
-                if (positions[i].Active)
-                    tempList.Add(positions[i]);
+                    tempList.Add(players[i]);
             }
             return tempList;
         }
@@ -359,13 +442,13 @@ namespace MiniCasino.Poker
 
         private void SetBetPoolToZero()
         {
-            for(int i = 0; i < playerGroup.Count; i++)
+            for(int i = 0; i < betPool.Count; i++)
             {
                 betPool[positions[i]] = 0;
             }
         }
 
-        private int GetPosition()
+        private int GetStartingPosition()
         {
             if(button + 3 > 8)
             {
@@ -418,6 +501,16 @@ namespace MiniCasino.Poker
             }
         }
 
+        private void PrintTableCards()
+        {
+            Console.Write("Table cards: ");
+            if (tableCards.Count > 1)
+                tableCards.ForEach(a => Console.Write(a.ToString() + " "));
+            else
+                Log("No table cards");
+            Console.WriteLine();
+        }
+
         protected override void End()
         {
             Console.WriteLine($"Pot size: {pot}");
@@ -427,7 +520,7 @@ namespace MiniCasino.Poker
             Console.WriteLine(st.Count);
             ResetPlayerContext();
             SetBetPoolToZero();
-            tableCards = null;
+            tableCards.Clear();
             betPool.Values.ToList().ForEach(a => a = 0);
             playerGroup.ForEach(a => a.DestroyCards());
             pot = 0;

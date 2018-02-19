@@ -37,6 +37,19 @@ namespace MiniCasino.Poker
             Chips = 10000;
         }
 
+        public PokerPlayer(Patron p) : base(p.GetAddress().QualifiedAddress, p.GetBirthday(), p.GetSex())
+        {
+            Money = p.Money;
+            base.PlayerControlled = p.PlayerControlled;
+            base.Address = p.Address;
+            base.Age = p.Age;
+            base.Birthday = p.Birthday;
+            base.Firstname = p.Firstname;
+            base.Lastname = p.Lastname;
+            pocketCards = new List<Card>();
+            Chips = 10000;
+        }
+
         private static PokerPlayer DefaultPatron()
         {
             return new PokerPlayer("321 Default St", new DateTime(1984, 1, 1), 'M');
@@ -117,7 +130,8 @@ namespace MiniCasino.Poker
 
         public void PrintCards()
         {
-            pocketCards.ForEach(a => { Console.WriteLine(a.ToString()); });
+            pocketCards.ForEach(a => { Console.Write(a.ToString() + " "); });
+            Console.WriteLine();
         }
 
         public bool PlayerControlled()
