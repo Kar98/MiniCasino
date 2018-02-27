@@ -1,9 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.26403.7
+VisualStudioVersion = 15.0.27130.2027
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MiniCasino", "MiniCasino\MiniCasino.csproj", "{D7219F0F-81DA-4E92-B76F-CBF10BF34D0C}"
+EndProject
+Project("{00D1A9C2-B5F0-4AF3-8072-F6C62B433612}") = "CasinoDB", "CasinoDB\CasinoDB.sqlproj", "{A54EA297-DB9D-40E9-84AD-65491F8C4F4C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,8 +17,17 @@ Global
 		{D7219F0F-81DA-4E92-B76F-CBF10BF34D0C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D7219F0F-81DA-4E92-B76F-CBF10BF34D0C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D7219F0F-81DA-4E92-B76F-CBF10BF34D0C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A54EA297-DB9D-40E9-84AD-65491F8C4F4C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A54EA297-DB9D-40E9-84AD-65491F8C4F4C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A54EA297-DB9D-40E9-84AD-65491F8C4F4C}.Debug|Any CPU.Deploy.0 = Debug|Any CPU
+		{A54EA297-DB9D-40E9-84AD-65491F8C4F4C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A54EA297-DB9D-40E9-84AD-65491F8C4F4C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A54EA297-DB9D-40E9-84AD-65491F8C4F4C}.Release|Any CPU.Deploy.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {26D722EF-49B3-490A-9526-DFE7F10E8095}
 	EndGlobalSection
 EndGlobal

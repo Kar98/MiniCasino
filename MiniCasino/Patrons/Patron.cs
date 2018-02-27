@@ -16,7 +16,7 @@ namespace MiniCasino.Patrons
 
         }
 
-        public Patron(DateTime bday, char sex, bool verified, string firstname, string lastname) 
+        public Patron(DateTime bday, char sex, bool verified, string firstname, string lastname)
             : base(bday, sex)
         {
             this.Birthday = bday;
