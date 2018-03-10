@@ -11,19 +11,20 @@ namespace MiniCasino
 {
     public static class Db
     {
-        private const string connString = "Server=tcp:minicasino.database.windows.net,1433;Initial Catalog=minicasino;Persist Security Info=False;User ID={your_username};Password={your_password};MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;";
+        private const string connString = "Data Source=(localdb)\\ProjectsV13;Initial Catalog=CasinoDB;Integrated Security=True;Connect Timeout=30;Encrypt=False;TrustServerCertificate=False;ApplicationIntent=ReadWrite;MultiSubnetFailover=False";
 
-        public static SqlConnectionStringBuilder GetDbString()
+        public static string GetDbString()
         {
             try
             {
+                /* Azure
                 var cb = new SqlConnectionStringBuilder();
                 cb.DataSource = "minicasino.database.windows.net";
                 cb.UserID = "kar98";
                 cb.Password = "CASINOsatellite11!";
                 cb.InitialCatalog = "minicasino";
-
-                return cb;
+                */
+                return connString;
             }
             catch (SqlException e)
             {
@@ -67,28 +68,48 @@ namespace MiniCasino
             return "";
         }
 
-        public static Patron GetPatronFromDB(int index = 2)
+        public static Patron GetPatronFromDB(int index)
         {
             var ds = new DataSet();
             
             var patroncmd = $"SELECT * FROM Patron Where ID = {index}";
 
-            using (var conn = new SqlConnection(GetDbString().ConnectionString))
+            using (var conn = new SqlConnection(GetDbString()))
             {
                 conn.Open();
                 using (var command = new SqlCommand(patroncmd, conn))
                 {
                     
+                    //Fix the below, it cannot find the Table apparently.
                     using (SqlDataAdapter da = new SqlDataAdapter(command))
                     {
                         da.Fill(ds);
                     }
                     
+                    //Firstname, Lastname, Sex, Verified, Birthday
+                    var fname = (string)ds.Tables[0].Rows[0]["Firstname"];
+                    var lname = (string)ds.Tables[0].Rows[0]["Lastname"];
+                    var sex = (char)ds.Tables[0].Rows[0]["Sex"];
+                    var verified = (bool)ds.Tables[0].Rows[0]["Verified"];
+                    var birthday = DbDateToString((string)ds.Tables[0].Rows[0]["Birthday"]);
+
+                    return new Patron(birthday, sex, verified, fname, lname);
                 }
                 //var patronaddresscmd = $"SELECT * FROM Address Where ID = {PatronTable["Address"]}";
             }
 
             return null;
+        }
+
+        private static DateTime DbDateToString(string dbDate)
+        {
+            var splits = dbDate.Split('-');
+            if(splits.Length != 3)
+            {
+                throw new Exception("Date string is not in the correct format");
+            }
+
+            return new DateTime(int.Parse(splits[0]), int.Parse(splits[1]), int.Parse(splits[2]));
         }
 
 

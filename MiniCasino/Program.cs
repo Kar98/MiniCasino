@@ -32,7 +32,7 @@ namespace MiniCasino
         {
             GenerateRooms();
             r = new Random();
-
+            //TODO test
             self.PlayerControlled = true;
 
 
@@ -45,6 +45,8 @@ namespace MiniCasino
             games.ForEach(a => {
                 tasks.Add(Task.Factory.StartNew(() => { a.StartGame(); }));
                     });
+
+            Db.GetPatronFromDB(1);
 
             HandleCommands();
             

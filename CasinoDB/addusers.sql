@@ -1,4 +1,4 @@
 ﻿use CasinoDB
 
 INSERT INTO Patrons (Firstname, Lastname, Sex, Verified, Birthday)
-VALUES ('','','M',0,'');
+VALUES ('Alex','Sellonitzen','M',0, '1970-01-02');
