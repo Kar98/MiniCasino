@@ -46,7 +46,7 @@ namespace MiniCasino
                 tasks.Add(Task.Factory.StartNew(() => { a.StartGame(); }));
                     });
 
-            Db.GetPatronFromDB(1);
+            var patron = Db.GetPatronFromDB(1);
 
             HandleCommands();
             
@@ -95,14 +95,6 @@ namespace MiniCasino
                         break;
                     case "self poker":
                         tasks.Add(AddSelfToPoker());
-                        /*foreach(var g in games)
-                        {
-                            if(g.Type == CardGame.CardGameType.POKER)
-                            {
-                                PlayerMode(games.FindLast(a => a.Type == CardGame.CardGameType.POKER));
-                                break;
-                            }
-                        }*/
                         PlayerMode(games.FindLast(a => a.Type == CardGame.CardGameType.POKER));
                         break;
                     case "games":
@@ -113,6 +105,12 @@ namespace MiniCasino
                         break;
                     case "clean":
                         CleanupGames();
+                        break;
+                    case "exit":
+                        stop = true;
+                        break;
+                    case "quit":
+                        stop = true;
                         break;
                     default:
                         break;

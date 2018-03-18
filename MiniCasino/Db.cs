@@ -33,21 +33,24 @@ namespace MiniCasino
             return null;
         }
 
-        public static void Submit_Tsql_NonQuery(SqlConnection connection, string tsql)
+        public static void Submit_Tsql_NonQuery(string tsql)
         {
-            using (var command = new SqlCommand(tsql, connection))
+            using (var conn = new SqlConnection(GetDbString()))
             {
-                using (SqlDataReader reader = command.ExecuteReader())
+                using (var command = new SqlCommand(tsql, conn))
                 {
+                    using (SqlDataReader reader = command.ExecuteReader())
+                    {
 
+                    }
                 }
             }
         }
 
-        public static void SubmitTSqlQuery(string connection,string tsql)
+        public static void SubmitTSqlQuery(string tsql)
         {
             Console.WriteLine("Start submitsql method");
-            using (var conn = new SqlConnection(connection))
+            using (var conn = new SqlConnection(GetDbString()))
             {
                 using (var command = new SqlCommand(tsql, conn))
                 {
@@ -62,6 +65,28 @@ namespace MiniCasino
             }
         }
 
+        public static int RunSp(string spName)
+        {
+            try
+            {
+                using (var conn = new SqlConnection(GetDbString()))
+                {
+                    using (var command = new SqlCommand(spName, conn))
+                    {
+                        command.CommandType = CommandType.StoredProcedure;
+                        conn.Open();
+                        return command.ExecuteNonQuery();
+                    }
+                }
+            }
+            catch (SqlException ex)
+            {
+                Console.WriteLine(ex.Message);
+                throw ex;
+                return -1;
+            }
+        }
+
         private static string GetAddress()
         {
 
@@ -72,30 +97,36 @@ namespace MiniCasino
         {
             var ds = new DataSet();
             
-            var patroncmd = $"SELECT * FROM Patron Where ID = {index}";
+            var patroncmd = $"SELECT * FROM Patrons Where ID = {index}";
 
-            using (var conn = new SqlConnection(GetDbString()))
-            {
-                conn.Open();
-                using (var command = new SqlCommand(patroncmd, conn))
+            try
+            { 
+                using (var conn = new SqlConnection(GetDbString()))
                 {
-                    
-                    //Fix the below, it cannot find the Table apparently.
-                    using (SqlDataAdapter da = new SqlDataAdapter(command))
+                    conn.Open();
+                    using (var command = new SqlCommand(patroncmd, conn))
                     {
-                        da.Fill(ds);
-                    }
-                    
-                    //Firstname, Lastname, Sex, Verified, Birthday
-                    var fname = (string)ds.Tables[0].Rows[0]["Firstname"];
-                    var lname = (string)ds.Tables[0].Rows[0]["Lastname"];
-                    var sex = (char)ds.Tables[0].Rows[0]["Sex"];
-                    var verified = (bool)ds.Tables[0].Rows[0]["Verified"];
-                    var birthday = DbDateToString((string)ds.Tables[0].Rows[0]["Birthday"]);
 
-                    return new Patron(birthday, sex, verified, fname, lname);
+                        //Fix the below, it cannot find the Table apparently.
+                        using (SqlDataAdapter da = new SqlDataAdapter(command))
+                        {
+                            da.Fill(ds);
+                        }
+
+                        //Firstname, Lastname, Sex, Verified, Birthday
+                        var fname = (string)ds.Tables[0].Rows[0]["Firstname"];
+                        var lname = (string)ds.Tables[0].Rows[0]["Lastname"];
+                        var sex = (string)ds.Tables[0].Rows[0]["Sex"];
+                        var verified = (bool)ds.Tables[0].Rows[0]["Verified"];
+                        var birthday = (DateTime)ds.Tables[0].Rows[0]["Birthday"];
+
+                        return new Patron(birthday, sex[0], verified, fname, lname);
+                    }
                 }
-                //var patronaddresscmd = $"SELECT * FROM Address Where ID = {PatronTable["Address"]}";
+
+            }catch(SqlException ex)
+            {
+                Console.WriteLine(ex.Message);
             }
 
             return null;

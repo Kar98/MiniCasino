@@ -5,5 +5,7 @@
     [Lastname] NVARCHAR(100) NULL, 
     [Sex] CHAR(1) NOT NULL, 
     [Verified] BIT NOT NULL, 
-    [Birthday] DATE NOT NULL
+    [Birthday] DATE NOT NULL, 
+	[WalletId] INT NOT NULL
+    CONSTRAINT [fk_wallet] FOREIGN KEY (WalletId) REFERENCES Wallet(Id)
 )

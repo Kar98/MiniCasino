@@ -15,5 +15,6 @@ namespace MiniCasino.Patrons
         int GetAge();
         DateTime GetBirthday();
         char GetSex();
+        int GetId();
     }
 }

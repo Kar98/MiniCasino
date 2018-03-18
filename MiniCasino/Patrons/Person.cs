@@ -8,6 +8,7 @@ namespace MiniCasino.Patrons
 {
     public abstract class Person : iPerson
     {
+        public int Id { get; protected set; }
         public AddressDetails Address { get; protected set; }
         public int Age { get; protected set; }
         public DateTime Birthday { get; protected set; }
@@ -19,22 +20,24 @@ namespace MiniCasino.Patrons
         /**public string Lastname { get; protected set; }
         public string Firstname { get; protected set; }*/
 
-        public Person(DateTime bday, char sex)
+        public Person(DateTime bday, char sex, int id = -1)
         {
             this.Address = new AddressDetails();
             CalculateAge(bday);
             this.Birthday = bday;
             this.Sex = sex;
             this.Verified = false;
+            this.Id = Id;
         }
 
-        public Person(string address, DateTime bday, char sex)
+        public Person(string address, DateTime bday, char sex, int id = -1)
         {
             this.Address = new AddressDetails(address);
             CalculateAge(bday);
             this.Birthday = bday;
             this.Sex = sex;
             this.Verified = false;
+            this.Id = id;
         }
         
         public string GetLastname()
@@ -92,6 +95,11 @@ namespace MiniCasino.Patrons
         public char GetSex()
         {
             return Sex;
+        }
+
+        public int GetId()
+        {
+            return Id;
         }
 
         public class AddressDetails
