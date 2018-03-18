@@ -65,8 +65,9 @@ namespace MiniCasino
             }
         }
 
-        public static int RunSp(string spName)
+        public static int RunSp(string spName, Dictionary<string,object> dict)
         {
+            //TODO: Fix this sp stuff.
             try
             {
                 using (var conn = new SqlConnection(GetDbString()))
@@ -74,8 +75,14 @@ namespace MiniCasino
                     using (var command = new SqlCommand(spName, conn))
                     {
                         command.CommandType = CommandType.StoredProcedure;
+                        AddParamsToSP(command, dict);
+                        var res = command.Parameters.Add("@out", SqlDbType.Int);
+                        res.Direction = ParameterDirection.ReturnValue;
                         conn.Open();
-                        return command.ExecuteNonQuery();
+
+                        command.ExecuteNonQuery();
+
+                        return (int)res.Value;
                     }
                 }
             }
@@ -84,6 +91,16 @@ namespace MiniCasino
                 Console.WriteLine(ex.Message);
                 throw ex;
                 return -1;
+            }
+        }
+
+        private static void AddParamsToSP(SqlCommand cmd, Dictionary<string,object> dict)
+        {
+            if (dict == null)
+                return;
+            foreach(var d in dict)
+            {
+                cmd.Parameters.AddWithValue(d.Key, d.Value);
             }
         }
 

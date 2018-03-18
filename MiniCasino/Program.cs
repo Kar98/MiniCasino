@@ -48,8 +48,18 @@ namespace MiniCasino
 
             var patron = Db.GetPatronFromDB(1);
 
+            Dictionary<string, object> dic = new Dictionary<string, object>();
+            dic.Add("@firstname", "Rory");
+            dic.Add("@lastname", "Crickmore");
+            dic.Add("@sex", 'M');
+            dic.Add("@verified", true);
+            dic.Add("@birthday", new DateTime(1991,4,2));
+
+            //Db.RunSp("AddPatron", dic);
+            Db.RunSp("TestProc", null);
+
             HandleCommands();
-            
+
             /*var connstr = Db.GetDbString().ConnectionString;
             var cmd = $"INSERT INTO Patron (Address,Firstname,Lastname,Age,Sex,Verified) " +
                 "VALUES(null, 'Tom', 'jones', 21, 'M', 1); ";
