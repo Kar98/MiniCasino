@@ -10,13 +10,6 @@ using MiniCasino.Poker;
 using System.IO;
 using MiniCasino.Patrons;
 
-/*
- * TODO: Have a DB where the rooms/people can be stored so no hard coding needed.
- * Have SQL scripts to auto setup the DB if needed.
- * Setup local DB to store values in
- *
- */
-
 namespace MiniCasino
 {
     class Program
@@ -32,7 +25,6 @@ namespace MiniCasino
         {
             GenerateRooms();
             r = new Random();
-            //TODO test
             self.PlayerControlled = true;
 
 
@@ -42,11 +34,10 @@ namespace MiniCasino
                 NewBlackjackGame();
             }
 
-            games.ForEach(a => {
+            games.ForEach(a =>
+            {
                 tasks.Add(Task.Factory.StartNew(() => { a.StartGame(); }));
-                    });
-
-            var patron = Db.GetPatronFromDB(1);
+            });
 
             Dictionary<string, object> dic = new Dictionary<string, object>();
             dic.Add("@firstname", "Rory");
@@ -54,20 +45,16 @@ namespace MiniCasino
             dic.Add("@sex", 'M');
             dic.Add("@verified", true);
             dic.Add("@birthday", new DateTime(1991,4,2));
+            dic.Add("@returnid", -1);
 
-            //Db.RunSp("AddPatron", dic);
-            Db.RunSp("TestProc", null);
+            Db.RunSp("AddPatron", dic);
+            Db.RunSp("AddPatron", dic);
+            Db.RunSp("AddPatron", dic);
+            Db.RunSp("AddPatron", dic);
+            //Db.RunSp("TestProc", null);
 
-            HandleCommands();
+            //HandleCommands();
 
-            /*var connstr = Db.GetDbString().ConnectionString;
-            var cmd = $"INSERT INTO Patron (Address,Firstname,Lastname,Age,Sex,Verified) " +
-                "VALUES(null, 'Tom', 'jones', 21, 'M', 1); ";
-
-            Db.GetPatronFromDB(2);
-            Console.ReadLine();
-            */
-            
         }
 
         private static void HandleCommands()

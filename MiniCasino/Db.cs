@@ -67,7 +67,6 @@ namespace MiniCasino
 
         public static int RunSp(string spName, Dictionary<string,object> dict)
         {
-            //TODO: Fix this sp stuff.
             try
             {
                 using (var conn = new SqlConnection(GetDbString()))
@@ -76,20 +75,18 @@ namespace MiniCasino
                     {
                         command.CommandType = CommandType.StoredProcedure;
                         AddParamsToSP(command, dict);
-                        var res = command.Parameters.Add("@out", SqlDbType.Int);
-                        res.Direction = ParameterDirection.ReturnValue;
-                        conn.Open();
 
+                        conn.Open();
                         command.ExecuteNonQuery();
 
-                        return (int)res.Value;
+                        return Convert.ToInt32(command.Parameters["@returnid"].Value);
                     }
                 }
             }
             catch (SqlException ex)
             {
                 Console.WriteLine(ex.Message);
-                throw ex;
+
                 return -1;
             }
         }
