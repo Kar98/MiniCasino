@@ -9,6 +9,7 @@ using System.Data.SqlClient;
 using MiniCasino.Poker;
 using System.IO;
 using MiniCasino.Patrons;
+using MiniCasino.Admin;
 
 namespace MiniCasino
 {
@@ -39,20 +40,12 @@ namespace MiniCasino
                 tasks.Add(Task.Factory.StartNew(() => { a.StartGame(); }));
             });
 
-            Dictionary<string, object> dic = new Dictionary<string, object>();
-            dic.Add("@firstname", "Rory");
-            dic.Add("@lastname", "Crickmore");
-            dic.Add("@sex", 'M');
-            dic.Add("@verified", true);
-            dic.Add("@birthday", new DateTime(1991,4,2));
-            dic.Add("@returnid", -1);
-
-            Db.RunSp("AddPatron", dic);
-            Db.RunSp("AddPatron", dic);
-            Db.RunSp("AddPatron", dic);
-            Db.RunSp("AddPatron", dic);
-            //Db.RunSp("TestProc", null);
-
+            DbFacilities db = new DbFacilities();
+            //db.CreatePatron(new Patron(new DateTime(1982,3,7), 'M', true, "From", "DBFac"));
+            
+            Person staff = new Patron(new DateTime(1980, 1, 1), 'M', true, "test", "test");
+            Console.WriteLine(db.CreateStaff(staff, 1));
+                
             //HandleCommands();
 
         }

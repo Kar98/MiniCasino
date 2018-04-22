@@ -20,24 +20,24 @@ namespace MiniCasino.Patrons
         /**public string Lastname { get; protected set; }
         public string Firstname { get; protected set; }*/
 
-        public Person(DateTime bday, char sex, int id = -1)
+        public Person(DateTime bday, char sex, string firstname, string lastname)
         {
             this.Address = new AddressDetails();
             CalculateAge(bday);
             this.Birthday = bday;
             this.Sex = sex;
             this.Verified = false;
-            this.Id = Id;
+            this.Firstname = firstname;
+            this.Lastname = lastname;
         }
 
-        public Person(string address, DateTime bday, char sex, int id = -1)
+        public Person(string address, DateTime bday, char sex)
         {
             this.Address = new AddressDetails(address);
             CalculateAge(bday);
             this.Birthday = bday;
             this.Sex = sex;
             this.Verified = false;
-            this.Id = id;
         }
         
         public string GetLastname()

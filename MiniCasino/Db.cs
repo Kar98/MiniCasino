@@ -65,7 +65,7 @@ namespace MiniCasino
             }
         }
 
-        public static int RunSp(string spName, Dictionary<string,object> dict)
+        public static int RunSpWithReturnId(string spName, Dictionary<string,object> dict)
         {
             try
             {
@@ -80,6 +80,32 @@ namespace MiniCasino
                         command.ExecuteNonQuery();
 
                         return Convert.ToInt32(command.Parameters["@returnid"].Value);
+                    }
+                }
+            }
+            catch (SqlException ex)
+            {
+                Console.WriteLine(ex.Message);
+
+                return -1;
+            }
+        }
+
+        public static int RunSp(string spName, Dictionary<string, object> dict)
+        {
+            try
+            {
+                using (var conn = new SqlConnection(GetDbString()))
+                {
+                    using (var command = new SqlCommand(spName, conn))
+                    {
+                        command.CommandType = CommandType.StoredProcedure;
+                        AddParamsToSP(command, dict);
+
+                        conn.Open();
+                        command.ExecuteNonQuery();
+
+                        return command.ExecuteNonQuery();
                     }
                 }
             }

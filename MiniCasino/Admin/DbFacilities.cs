@@ -13,13 +13,34 @@ namespace MiniCasino.Admin
 
         public int CreatePatron(Patron p)
         {
-            return -1;
+            var sp = "[dbo].[AddPatron]";
+            Dictionary<string, object> dict = new Dictionary<string, object>();
+
+            dict.Add("@firstname", p.Firstname);
+            dict.Add("@lastname", p.Lastname);
+            dict.Add("@sex", p.Sex);
+            dict.Add("@verified", p.Verified);
+            dict.Add("@birthday", p.Birthday);
+            dict.Add("@returnid", -1);
+
+            var retId = Db.RunSpWithReturnId(sp, dict);
+            return retId;
         }
 
-        public int CreateStaff(Person p)
+        public int CreateStaff(Person p, int departmentId)
         {
+            var sp = "[dbo].[AddStaff]";
+            Dictionary<string, object> dict = new Dictionary<string, object>();
 
-            return -1;
+            dict.Add("@firstname", p.Firstname);
+            dict.Add("@lastname", p.Lastname);
+            dict.Add("@sex", p.Sex);
+            dict.Add("@birthday", p.Birthday);
+            dict.Add("@deptid", departmentId);
+
+            var retId = Db.RunSp(sp, dict);
+
+            return retId;
         }
     }
 }

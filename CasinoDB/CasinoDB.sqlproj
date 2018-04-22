@@ -58,17 +58,19 @@
   <ItemGroup>
     <Folder Include="Properties" />
     <Folder Include="sp" />
+    <Folder Include="tables" />
   </ItemGroup>
   <ItemGroup>
-    <Build Include="Patrons.sql" />
-    <Build Include="Wallet.sql" />
-    <Build Include="addWallet.sql" />
     <Build Include="sp\AddPatron.sql" />
+    <Build Include="tables\Patrons.sql" />
+    <Build Include="tables\Department.sql" />
+    <Build Include="tables\Staff.sql" />
+    <Build Include="sp\AddStaff.sql" />
   </ItemGroup>
   <ItemGroup>
     <RefactorLog Include="CasinoDB.refactorlog" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="addPatron.sql" />
+    <Build Include="tables\Wallet.sql" />
   </ItemGroup>
 </Project>
